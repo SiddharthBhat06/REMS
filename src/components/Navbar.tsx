@@ -26,11 +26,11 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 bg-card backdrop-blur-md">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
           <Building2 className="h-7 w-7 text-accent" />
-          <span className="font-display text-xl font-bold text-foreground">EstateVault</span>
+          <span className="font-display text-xl font-bold text-primary-foreground">PropertyHub</span>
         </Link>
 
         {/* Desktop Nav */}

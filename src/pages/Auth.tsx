@@ -7,7 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Building2 } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const Sclient = createClient(supabaseUrl, supabaseKey);
+
+async function adduser(email: string, fullName: string) {
+  await Sclient.from("users").insert({ uname: fullName, email }).select();
+}
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -19,8 +28,8 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await adduser(email,fullName);
     setLoading(true);
-
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -38,7 +47,8 @@ const Auth = () => {
         if (error) throw error;
         toast({
           title: "Account created!",
-          description: "Please check your email to verify your account before signing in.",
+          description: "User created.",
+          className: "bg-green-50 text-green-900 border-green-200",
         });
         setIsLogin(true);
       }
@@ -60,7 +70,7 @@ const Auth = () => {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-accent">
             <Building2 className="h-6 w-6 text-accent-foreground" />
           </div>
-          <CardTitle className="font-display text-2xl">{isLogin ? "Welcome Back" : "Create Account"}</CardTitle>
+          <CardTitle className="font-display text-2xl text-primary-foreground">{isLogin ? "Welcome Back" : "Create Account"}</CardTitle>
           <CardDescription className="font-body">
             {isLogin ? "Sign in to manage your properties" : "Start managing real estate today"}
           </CardDescription>
@@ -69,19 +79,19 @@ const Auth = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="fullName" className="font-body text-sm">Full Name</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" required />
+                <Label htmlFor="fullName" className="font-body text-sm text-primary-foreground">Full Name</Label>
+                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" required className="text-primary-foreground" />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email" className="font-body text-sm">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+              <Label htmlFor="email" className="font-body text-sm text-primary-foreground">Email</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className="text-primary-foreground" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="font-body text-sm">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+              <Label htmlFor="password" className="font-body text-sm text-primary-foreground">Password</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="text-primary-foreground" />
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90">
+            <Button type="submit" disabled={loading} onSubmit={() => adduser(email,fullName)} className="w-full bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90">
               {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
             </Button>
           </form>

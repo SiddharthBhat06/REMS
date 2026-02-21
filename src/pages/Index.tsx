@@ -11,7 +11,7 @@ const features = [
 
 const Index = () => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-background">
       {/* Hero */}
       <section className="relative flex min-h-[70vh] items-center justify-center bg-gradient-hero px-4 text-center">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(35_85%_52%_/_0.08)_0%,_transparent_60%)]" />
@@ -37,7 +37,7 @@ const Index = () => {
               </Button>
             </Link>
             <Link to="/properties">
-              <Button size="lg" variant="outline" className="border-primary-foreground/20 px-8 font-body font-semibold text-primary-foreground hover:bg-primary-foreground/10">
+              <Button size="lg" className="bg-gradient-accent px-8 font-body font-semibold text-accent-foreground hover:opacity-90">
                 Browse Properties
               </Button>
             </Link>
@@ -48,7 +48,7 @@ const Index = () => {
       {/* Features */}
       <section className="container mx-auto px-4 py-20">
         <div className="mb-12 text-center">
-          <h2 className="font-display text-3xl font-bold text-foreground">Everything You Need</h2>
+          <h2 className="font-display text-3xl font-bold text-primary-foreground">Everything You Need</h2>
           <p className="mt-2 font-body text-muted-foreground">Streamlined tools for real estate management</p>
         </div>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
@@ -59,12 +59,12 @@ const Index = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15, duration: 0.5 }}
-              className="rounded-xl border border-border bg-card p-6 text-center shadow-card transition-all hover:shadow-card-hover"
+              className="rounded-xl bg-card border border-border p-6 text-center shadow-card transition-all hover:shadow-card-hover"
             >
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
                 <f.icon className="h-6 w-6 text-accent" />
               </div>
-              <h3 className="font-display text-lg font-semibold text-foreground">{f.title}</h3>
+              <h3 className="font-display text-lg font-semibold text-primary-foreground">{f.title}</h3>
               <p className="mt-2 font-body text-sm text-muted-foreground">{f.desc}</p>
             </motion.div>
           ))}
