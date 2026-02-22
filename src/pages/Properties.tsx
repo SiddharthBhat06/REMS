@@ -8,6 +8,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 interface Property {
   id: string;
   title: string;
+  description: string | null;
   price: number;
   address: string;
   city: string;
@@ -30,7 +31,7 @@ const Properties = () => {
     const fetchProperties = async () => {
       const { data, error } = await supabase
         .from("properties")
-        .select("id, title, price, address, city, bedrooms, bathrooms, area_sqft, property_type, status, image_url")
+        .select("id, title, description, price, address, city, bedrooms, bathrooms, area_sqft, property_type, status, image_url")
         .order("created_at", { ascending: false });
 
       if (!error && data) {
@@ -106,7 +107,19 @@ const Properties = () => {
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => (
-            <PropertyCard key={p.id} {...p} />
+            <PropertyCard
+              key={p.id}
+              title={p.title}
+              descri={p.description || ""}
+              price={p.price}
+              address={p.address}
+              city={p.city}
+              rooms={p.bedrooms}
+              bath={p.bathrooms}
+              ssqft={p.area_sqft}
+              ptype={p.property_type}
+              image_url={p.image_url}
+            />
           ))}
         </div>
       ) : (
