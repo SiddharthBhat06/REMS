@@ -3,6 +3,7 @@ import { Bath, BedDouble, Maximize, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PropertyCardProps {
   title: string;
@@ -61,29 +62,69 @@ const PropertyCard = ({
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
-          <div className="relative h-64 w-full">
-            <img src={imgSrc} alt={title} className="h-full w-full object-cover" />
-            <Badge className="absolute right-4 top-4 border-none bg-primary/80 text-sm font-medium text-primary-foreground capitalize">
-              {ptype}
-            </Badge>
-          </div>
-          <div className="p-6 space-y-4">
-            <DialogHeader>
-              <DialogTitle className="font-display text-2xl">{title}</DialogTitle>
-              <DialogDescription className="flex items-center gap-1 text-muted-foreground">
-                <MapPin className="h-4 w-4" /> {address}, {city}
-              </DialogDescription>
-            </DialogHeader>
-            <p className="font-display text-3xl font-bold text-foreground">${price.toLocaleString()}</p>
-            {descri && (
-              <p className="text-sm text-muted-foreground leading-relaxed">{descri}</p>
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <motion.div
+                  className="relative h-64 w-full overflow-hidden"
+                  initial={{ scale: 1.1 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <img src={imgSrc} alt={title} className="h-full w-full object-cover" />
+                  <Badge className="absolute right-4 top-4 border-none bg-primary/80 text-sm font-medium text-primary-foreground capitalize">
+                    {ptype}
+                  </Badge>
+                </motion.div>
+                <div className="p-6 space-y-4">
+                  <DialogHeader>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15, duration: 0.4 }}
+                    >
+                      <DialogTitle className="font-display text-2xl">{title}</DialogTitle>
+                      <DialogDescription className="flex items-center gap-1 text-muted-foreground">
+                        <MapPin className="h-4 w-4" /> {address}, {city}
+                      </DialogDescription>
+                    </motion.div>
+                  </DialogHeader>
+                  <motion.p
+                    className="font-display text-3xl font-bold text-foreground"
+                    initial={{ opacity: 0, x: -15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.25, duration: 0.4 }}
+                  >
+                    ${price.toLocaleString()}
+                  </motion.p>
+                  {descri && (
+                    <motion.p
+                      className="text-sm text-muted-foreground leading-relaxed"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.35, duration: 0.4 }}
+                    >
+                      {descri}
+                    </motion.p>
+                  )}
+                  <motion.div
+                    className="flex items-center gap-6 border-t border-border pt-4 text-sm text-muted-foreground"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.4 }}
+                  >
+                    <span className="flex items-center gap-2"><BedDouble className="h-5 w-5" />{rooms} Bedrooms</span>
+                    <span className="flex items-center gap-2"><Bath className="h-5 w-5" />{bath} Bathrooms</span>
+                    <span className="flex items-center gap-2"><Maximize className="h-5 w-5" />{ssqft.toLocaleString()} sqft</span>
+                  </motion.div>
+                </div>
+              </motion.div>
             )}
-            <div className="flex items-center gap-6 border-t border-border pt-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2"><BedDouble className="h-5 w-5" />{rooms} Bedrooms</span>
-              <span className="flex items-center gap-2"><Bath className="h-5 w-5" />{bath} Bathrooms</span>
-              <span className="flex items-center gap-2"><Maximize className="h-5 w-5" />{ssqft.toLocaleString()} sqft</span>
-            </div>
-          </div>
+          </AnimatePresence>
         </DialogContent>
       </Dialog>
     </>
