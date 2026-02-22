@@ -80,8 +80,8 @@ const PropertyCard = ({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1, duration: 0.4 }}
                     >
-                      <DialogTitle className="font-display text-2xl">{title}</DialogTitle>
-                      <DialogDescription className="flex items-center gap-1 text-muted-foreground">
+                      <DialogTitle className="font-display text-2xl text-muted">{title}</DialogTitle>
+                      <DialogDescription className="flex items-center gap-1 text-muted">
                         <MapPin className="h-4 w-4" /> {address}, {city}
                       </DialogDescription>
                     </motion.div>
@@ -90,7 +90,7 @@ const PropertyCard = ({
                     {ptype}
                   </Badge>
                   <motion.p
-                    className="font-display text-3xl font-bold text-foreground"
+                    className="font-display text-3xl font-bold text-muted"
                     initial={{ opacity: 0, x: -15 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, duration: 0.4 }}
@@ -99,7 +99,7 @@ const PropertyCard = ({
                   </motion.p>
                   {descri && (
                     <motion.p
-                      className="text-sm text-muted-foreground leading-relaxed"
+                      className="text-sm text-muted leading-relaxed"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3, duration: 0.4 }}
@@ -123,8 +123,8 @@ const PropertyCard = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.45, duration: 0.4 }}
                   >
-                    <h4 className="font-display text-sm font-semibold text-foreground">Owner Contact</h4>
-                    <div className="space-y-2 text-sm text-muted-foreground">
+                    <h4 className="font-display text-sm font-semibold text-muted">Owner Contact</h4>
+                    <div className="space-y-2 text-sm text-muted">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         <span>{ownerName || "Not provided"}</span>
