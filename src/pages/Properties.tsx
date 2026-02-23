@@ -12,6 +12,7 @@ interface Property {
   pid: UUID;
   descri: string;
   title: string;
+  description: string | null;
   price: number;
   address: string;
   city: string;

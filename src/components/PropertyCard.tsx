@@ -80,7 +80,7 @@ const PropertyCard = ({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1, duration: 0.4 }}
                     >
-                      <DialogTitle className="font-display text-2xl text-muted">{title}</DialogTitle>
+                      <DialogTitle className="font-display text-2xl">{title}</DialogTitle>
                       <DialogDescription className="flex items-center gap-1 text-muted-foreground">
                         <MapPin className="h-4 w-4" /> {address}, {city}
                       </DialogDescription>
@@ -90,7 +90,7 @@ const PropertyCard = ({
                     {ptype}
                   </Badge>
                   <motion.p
-                    className="font-display text-3xl font-bold text-muted"
+                    className="font-display text-3xl font-bold text-foreground"
                     initial={{ opacity: 0, x: -15 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, duration: 0.4 }}
