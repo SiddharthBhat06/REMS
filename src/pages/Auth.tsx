@@ -27,41 +27,41 @@ const Auth = () => {
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await adduser(email,fullName);
-    setLoading(true);
-    try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate("/properties");
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: fullName },
-            emailRedirectTo: window.location.origin,
-          },
-        });
-        if (error) throw error;
-        toast({
-          title: "Account created!",
-          description: "User created.",
-          className: "bg-green-50 text-green-900 border-green-200",
-        });
-        setIsLogin(true);
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    if (isLogin) {
+      // --- LOGIN FLOW ---
+      // Just sign in. Do NOT call adduser here.
+      const { error } = await Sclient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      
+      navigate("/properties");
+    } else {
+      // --- SIGN UP FLOW ---
+      // 1. Create the Auth Account
+      const { data, error: authError } = await Sclient.auth.signUp({
+        email,
+        password,
       });
-    } finally {
-      setLoading(false);
+
+      if (authError) throw authError;
+
+      // 2. ONLY add to your custom table during Sign Up
+      if (data.user) {
+        await adduser(email, fullName); 
+      }
+
+      toast({ title: "Account created!", className: "bg-green-500 text-white" });
+      setIsLogin(true);
     }
-  };
+  } catch (error: any) {
+    toast({ title: "Error", description: error.message, variant: "destructive", className: "bg-red-500 text-white" });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4">

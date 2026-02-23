@@ -37,13 +37,13 @@ const Navbar = () => {
         <div className="hidden items-center gap-6 md:flex">
           {user ? (
             <>
-              <Link to="/properties" className="font-body text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/properties" className="font-body text-sm font-medium text-muted-foreground transition-colors hover:text-muted">
                 Search Properties
               </Link>
-              <Link to="/add-property" className="font-body text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/add-property" className="font-body text-sm font-medium text-muted-foreground transition-colors hover:text-muted">
                 Add Property
               </Link>
-              <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+              <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2 bg-card text-white bg-gradient-accent hover:opacity-80">
                 <LogOut className="h-4 w-4" />
                 Sign Out
               </Button>
@@ -82,7 +82,7 @@ const Navbar = () => {
               </>
             ) : (
               <Link to="/auth" onClick={() => setMenuOpen(false)}>
-                <Button size="sm" className="w-full bg-gradient-accent font-semibold text-accent-foreground">Sign In</Button>
+                <Button size="sm" className="w-full bg-primary-foreground font-semibold text-accent-foreground hover:bg-accent-foreground">Sign In</Button>
               </Link>
             )}
           </div>
