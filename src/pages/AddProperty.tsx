@@ -48,19 +48,19 @@ const AddProperty = () => {
       setLoading(false);
       return;
     }
-const {data :ownerData, error: ownerError} = await Sclient.from("owner").select("oid").eq("email", user.email).single();
+const {data :ownerData, error: ownerError} = await Sclient.from("users").select("uid").eq("email", user.email).single();
       if(ownerError || !ownerData){
         toast({ title: "Error", description: "Owner record not found.", variant: "destructive" });
         setLoading(false);
         return;
       }
-      const ownerid = ownerData.oid;
+      const userid = ownerData.uid;
 
 
   
 
 const { error } = await Sclient.from("property").insert({
-  oid: ownerid,
+  uid: userid,
   title: form.title.trim(),
   // Your schema has a default 'NA', so if descri is empty, 
   // omit it or send the string 'NA' to avoid null constraint issues.
@@ -77,7 +77,7 @@ const { error } = await Sclient.from("property").insert({
   ...(form.image_url?.trim() && { iurl: form.image_url.trim() }) 
 }); 
     if (error) {
-      toast({ title: "owner id:"+ownerid, description: error.message, variant: "destructive" });
+      toast({ title: "Owner id:"+userid, description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success!", description: "Property listed successfully.", className: "bg-green-500 text-white" });
       navigate("/properties");

@@ -12,27 +12,52 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import { createClient } from "@supabase/supabase-js";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { C } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
-import{ createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const Sclient = createClient(supabaseUrl, supabaseKey);
 
 const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<string | null>(null); // State to store the user's role
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  
+
+  // Helper function to fetch role from your 'users' table
+  const fetchUserRole = async (userId: string) => {
+const { data, error } = await Sclient // Use Sclient if that's what you named it
+  .from("users")
+  .select("role")
+  .eq("uid", userId)
+  .single();
+
+    if (!error && data) {
+      setRole(data.role);
+    } else {
+      setRole(null);
+    }
+  };
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) fetchUserRole(currentUser.id);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchUserRole(currentUser.id);
+      } else {
+        setRole(null); // Clear role on logout
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -43,7 +68,6 @@ const Navbar = () => {
     setMenuOpen(false);
     navigate("/");
   };
-
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-gray-900/80 backdrop-blur-md">
@@ -62,9 +86,13 @@ const Navbar = () => {
           <Link to="/properties" className="text-sm font-medium text-gray-300 transition-colors hover:text-orange-500">
             Search Properties
           </Link>
-          <Link to="/add-property" className="text-sm font-medium text-gray-300 transition-colors hover:text-orange-500">
-            Add Property
-          </Link>
+
+          {/* Render ONLY if user is an Owner */}
+          {role === "Owner" && (
+            <Link to="/add-property" className="text-sm font-medium text-gray-300 transition-colors hover:text-orange-500">
+              Add Property
+            </Link>
+          )}
 
           {user ? (
             <DropdownMenu>
@@ -81,8 +109,8 @@ const Navbar = () => {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none"></p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    {role && <p className="text-[10px] font-bold uppercase text-orange-500">{role}</p>}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -126,9 +154,14 @@ const Navbar = () => {
             <Link to="/properties" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-lg font-medium text-gray-300">
               <Search className="h-5 w-5" /> Search Properties
             </Link>
-            <Link to="/add-property" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-lg font-medium text-gray-300">
-              <PlusCircle className="h-5 w-5" /> Add Property
-            </Link>
+
+            {/* Mobile Render ONLY if user is an Owner */}
+            {role === "Owner" && (
+              <Link to="/add-property" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-lg font-medium text-gray-300">
+                <PlusCircle className="h-5 w-5" /> Add Property
+              </Link>
+            )}
+
             <hr className="border-white/10" />
             {user ? (
               <Button 
