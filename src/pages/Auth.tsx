@@ -8,24 +8,41 @@ import { useToast } from "@/hooks/use-toast";
 import { Building2, Home } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
-// --- CLIENT SETUP ---
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const Sclient = createClient(supabaseUrl, supabaseKey);
 
-// --- DATABASE HELPER ---
-// We pass the UID from Supabase Auth so the tables are linked
-async function adduser(uid: string, email: string, fullName: string, role: string) {
-  const { error } = await Sclient
+async function adduser(uid: string, email: string, fullName: string, role: string, contact: string) {
+  const { error: userError } = await Sclient
     .from("users")
     .insert({ 
-      uid: uid,      // Matches your 'uuid' column
+      uid: uid,
       uname: fullName, 
       email: email, 
-      role: role     // Will be 'Owner' or 'Tenant'
+      role: role
     });
   
-  if (error) throw error;
+  if (userError) throw userError;
+
+  if (role === "Owner") {
+    const { error: ownerError } = await Sclient
+      .from("owners")
+      .insert({
+        uid: uid,
+        name: fullName,
+        contact: contact || null,
+      });
+    if (ownerError) throw ownerError;
+  } else if (role === "Tenant") {
+    const { error: tenantError } = await Sclient
+      .from("tenants")
+      .insert({
+        uid: uid,
+        Name: fullName,
+        contact: contact || null,
+      });
+    if (tenantError) throw tenantError;
+  }
 }
 
 const Auth = () => {
@@ -33,7 +50,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"Owner" | "Tenant">("Owner"); // Matched to SQL Constraint
+  const [contact, setContact] = useState("");
+  const [role, setRole] = useState<"Owner" | "Tenant">("Owner");
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
@@ -45,13 +63,10 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        // --- LOGIN FLOW ---
         const { error } = await Sclient.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        
         navigate("/properties");
       } else {
-        // --- SIGN UP FLOW ---
         const { data, error: authError } = await Sclient.auth.signUp({
           email,
           password,
@@ -59,9 +74,8 @@ const Auth = () => {
 
         if (authError) throw authError;
 
-        // If auth is successful, create the profile in our 'users' table
         if (data.user) {
-          await adduser(data.user.id, email, fullName, role); 
+          await adduser(data.user.id, email, fullName, role, contact); 
         }
 
         toast({ 
@@ -109,6 +123,17 @@ const Auth = () => {
                     onChange={(e) => setFullName(e.target.value)} 
                     placeholder="John Doe" 
                     required 
+                    className="text-primary-foreground" 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact" className="font-body text-sm text-primary-foreground">Contact (Phone)</Label>
+                  <Input 
+                    id="contact" 
+                    value={contact} 
+                    onChange={(e) => setContact(e.target.value)} 
+                    placeholder="+1 234 567 8901" 
                     className="text-primary-foreground" 
                   />
                 </div>

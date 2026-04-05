@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bath, BedDouble, Maximize, MapPin, User, Mail, Phone } from "lucide-react";
+import { Bath, BedDouble, Maximize, MapPin, User, Phone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -11,25 +11,25 @@ interface PropertyCardProps {
   price: number;
   address: string;
   city: string;
+  state?: string;
   rooms: number;
   bath: number;
   ssqft: number;
   ptype: string;
-  image_url?: string | null;
+  iurl?: string | null;
   ownerName?: string;
-  ownerEmail?: string;
-  ownerPhone?: string;
+  ownerContact?: string;
 }
 
 const imager =
   "https://previews.123rf.com/images/lexlinx/lexlinx2012/lexlinx201200011/161240800-property-logo-home-builder-housing-industry-design-template-idea-for-estate-and-architecture.jpg";
 
 const PropertyCard = ({
-  title, descri, price, address, city, rooms, bath, ssqft, ptype, image_url,
-  ownerName, ownerEmail, ownerPhone,
+  title, descri, price, address, city, state, rooms, bath, ssqft, ptype, iurl,
+  ownerName, ownerContact,
 }: PropertyCardProps) => {
   const [open, setOpen] = useState(false);
-  const imgSrc = image_url || imager;
+  const imgSrc = iurl || imager;
 
   return (
     <>
@@ -54,7 +54,7 @@ const PropertyCard = ({
           </p>
           <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
-            <span className="line-clamp-1">{address}, {city}</span>
+            <span className="line-clamp-1">{address}, {city}{state ? `, ${state}` : ""}</span>
           </div>
           <div className="mt-3 flex items-center gap-4 border-t border-border pt-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><BedDouble className="h-3.5 w-3.5" />{rooms} Beds</span>
@@ -82,7 +82,7 @@ const PropertyCard = ({
                     >
                       <DialogTitle className="font-display text-2xl text-muted">{title}</DialogTitle>
                       <DialogDescription className="flex items-center gap-1 text-muted-foreground">
-                        <MapPin className="h-4 w-4" /> {address}, {city}
+                        <MapPin className="h-4 w-4" /> {address}, {city}{state ? `, ${state}` : ""}
                       </DialogDescription>
                     </motion.div>
                   </DialogHeader>
@@ -130,12 +130,8 @@ const PropertyCard = ({
                         <span>{ownerName || "Not provided"}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        <span>{ownerEmail || "Not provided"}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4" />
-                        <span>{ownerPhone || "Not provided"}</span>
+                        <span>{ownerContact || "Not provided"}</span>
                       </div>
                     </div>
                   </motion.div>

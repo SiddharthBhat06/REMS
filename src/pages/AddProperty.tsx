@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,8 +22,7 @@ const AddProperty = () => {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    property_type: "residential",
-    status: "available",
+    property_type: "Residential",
     price: "",
     bedrooms: "",
     bathrooms: "",
@@ -32,8 +30,7 @@ const AddProperty = () => {
     address: "",
     city: "",
     state: "",
-    zip_code: "",
-    image_url: "",
+    iurl: "",
   });
 
   const update = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
@@ -48,36 +45,36 @@ const AddProperty = () => {
       setLoading(false);
       return;
     }
-const {data :ownerData, error: ownerError} = await Sclient.from("users").select("uid").eq("email", user.email).single();
-      if(ownerError || !ownerData){
-        toast({ title: "Error", description: "Owner record not found.", variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      const userid = ownerData.uid;
 
+    const { data: ownerData, error: ownerError } = await Sclient
+      .from("owners")
+      .select("oid")
+      .eq("uid", user.id)
+      .single();
 
-  
+    if (ownerError || !ownerData) {
+      toast({ title: "Error", description: "Owner record not found. Only owners can add properties.", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
 
-const { error } = await Sclient.from("property").insert({
-  uid: userid,
-  title: form.title.trim(),
-  // Your schema has a default 'NA', so if descri is empty, 
-  // omit it or send the string 'NA' to avoid null constraint issues.
-  descri: form.description.trim() || 'NA',
-  city: form.city.trim(),
-  state: form.state.trim(), // Removed '|| null' because SQL says NOT NULL
-  address: form.address.trim(),
-  ptype: form.property_type.charAt(0).toUpperCase() + form.property_type.slice(1), // Changed from Ptype to ptype (lowercase)
-  rooms: parseInt(form.bedrooms) || 0,
-  bath: parseInt(form.bathrooms) || 0,
-  ssqft: parseFloat(form.area_sqft) || 1, // Changed from SSQFT; must be > 0 per SQL check
-  price: parseFloat(form.price) || 1, // must be > 0 per SQL check
-  // Your schema has a default placeholder URL, so only send IURL if the user provided one.
-  ...(form.image_url?.trim() && { iurl: form.image_url.trim() }) 
-}); 
+    const { error } = await Sclient.from("property").insert({
+      uid: user.id,
+      title: form.title.trim(),
+      descri: form.description.trim() || "NA",
+      city: form.city.trim(),
+      state: form.state.trim(),
+      address: form.address.trim(),
+      ptype: form.property_type,
+      rooms: parseInt(form.bedrooms) || 0,
+      bath: parseInt(form.bathrooms) || 0,
+      ssqft: parseFloat(form.area_sqft) || 0,
+      price: parseFloat(form.price) || 0,
+      iurl: form.iurl.trim() || null,
+    });
+
     if (error) {
-      toast({ title: "Owner id:"+userid, description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success!", description: "Property listed successfully.", className: "bg-green-500 text-white" });
       navigate("/properties");
@@ -109,21 +106,18 @@ const { error } = await Sclient.from("property").insert({
               <Textarea value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Describe the property..." rows={3} maxLength={2000} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0" />
             </div>
 
-            {/* Type & Status */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Type *</Label>
-                <Select value={form.property_type} onValueChange={(v) => update("property_type", v)}>
-                  <SelectTrigger className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0 "><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="residential">Residential</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                    <SelectItem value="industrial">Industrial</SelectItem>
-                    <SelectItem value="land">Land</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            
+            {/* Type */}
+            <div className="space-y-2">
+              <Label className="font-body text-sm text-muted">Type *</Label>
+              <Select value={form.property_type} onValueChange={(v) => update("property_type", v)}>
+                <SelectTrigger className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Residential">Residential</SelectItem>
+                  <SelectItem value="Commercial">Commercial</SelectItem>
+                  <SelectItem value="Industrial">Industrial</SelectItem>
+                  <SelectItem value="Land">Land</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Price, Beds, Baths, Area */}
@@ -133,7 +127,7 @@ const { error } = await Sclient.from("property").insert({
                 <Input type="number" value={form.price} onChange={(e) => update("price", e.target.value)} placeholder="250000" required min="0" className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
               </div>
               <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Bedrooms</Label>
+                <Label className="font-body text-sm text-muted">Rooms</Label>
                 <Input type="number" value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)} placeholder="3" min="0" className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
               </div>
               <div className="space-y-2">
@@ -146,8 +140,8 @@ const { error } = await Sclient.from("property").insert({
               </div>
             </div>
 
-            {/* Address */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Address, City, State */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label className="font-body text-sm text-muted">Address *</Label>
                 <Input value={form.address} onChange={(e) => update("address", e.target.value)} placeholder="123 Main St" required maxLength={300} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
@@ -156,25 +150,19 @@ const { error } = await Sclient.from("property").insert({
                 <Label className="font-body text-sm text-muted">City *</Label>
                 <Input value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="New York" required maxLength={100} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
               </div>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label className="font-body text-sm text-muted">State</Label>
                 <Input value={form.state} onChange={(e) => update("state", e.target.value)} placeholder="NY" maxLength={50} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
-              </div>
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Zip Code</Label>
-                <Input value={form.zip_code} onChange={(e) => update("zip_code", e.target.value)} placeholder="10001" maxLength={20} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
               </div>
             </div>
 
             {/* Image URL */}
             <div className="space-y-2">
               <Label className="font-body text-sm text-muted">Image URL</Label>
-              <Input value={form.image_url} onChange={(e) => update("image_url", e.target.value)} placeholder="https://example.com/image.jpg" maxLength={500} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+              <Input value={form.iurl} onChange={(e) => update("iurl", e.target.value)} placeholder="https://example.com/image.jpg" maxLength={500} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
             </div>
 
-            <Button type="submit" onSubmit={handleSubmit} disabled={loading} className="w-full bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90">
+            <Button type="submit" disabled={loading} className="w-full bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90">
               {loading ? "Adding..." : "Add Property"}
             </Button>
           </form>
