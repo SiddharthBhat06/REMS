@@ -76,8 +76,8 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-90">
           <Building2 className="h-7 w-7 text-orange-500" />
           <span className="font-display text-xl font-bold">
-            <span className="text-orange-500">Property</span>
-            <span className="text-white">Hub</span>
+            <span className="text-orange-500">RE</span>
+            <span className="text-white">MS</span>
           </span>
         </Link>
 
