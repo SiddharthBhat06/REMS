@@ -178,7 +178,7 @@ const Profile = () => {
     : "bg-blue-500/20 text-blue-400 border-blue-500/30";
 
   return (
-    <div className="min-h-[calc(100vh-64px)] px-4 py-8">
+    <div className="min-h-[calc(100vh-64px)] px-4 py-8 bg-slate-900/70">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 md:flex-row md:items-start">
 
         {/* ── LEFT PANEL ── */}
@@ -205,7 +205,7 @@ const Profile = () => {
               )}
             </CardContent>
 
-            <div className="border-t border-border px-2 py-2 space-y-0.5">
+            <div className="px-2 py-2 space-y-0.5">
               <button
                 onClick={() => setActiveTab("listings")}
                 className={`flex w-full items-center gap-2 rounded-md px-3 py-2 font-body text-sm transition-colors ${activeTab === "listings" ? "bg-accent/10 text-accent font-semibold" : "text-muted-foreground hover:text-primary-foreground"}`}
