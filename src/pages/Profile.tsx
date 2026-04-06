@@ -5,10 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Building2, LogOut, Home, User, Mail, Lock, Save, ChevronRight, Phone, Plus, Key,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -49,7 +45,6 @@ const Profile = () => {
       if (!user) { navigate("/auth"); return; }
       setEmail(user.email ?? "");
 
-      // Fetch role + name from users table
       const { data: userData } = await Sclient
         .from("users")
         .select("role, uname")
@@ -62,7 +57,6 @@ const Profile = () => {
       }
 
       if (userData?.role === "Owner") {
-        // Fetch contact from owners table
         const { data: ownerData } = await Sclient
           .from("owners")
           .select("contact")
@@ -70,7 +64,6 @@ const Profile = () => {
           .maybeSingle();
         if (ownerData) setContact(ownerData.contact ?? "");
 
-        // Fetch properties from property table where uid = user.id
         const { data: props } = await Sclient
           .from("property")
           .select("pid, title, address, city, price, ptype, rooms, bath")
@@ -78,7 +71,6 @@ const Profile = () => {
         setProperties(props ?? []);
 
       } else if (userData?.role === "Tenant") {
-        // Fetch contact from tenants table
         const { data: tenantData } = await Sclient
           .from("tenants")
           .select("tid, contact")
@@ -88,7 +80,6 @@ const Profile = () => {
         if (tenantData) {
           setContact(tenantData.contact ?? "");
 
-          // Fetch rented properties via transactions table
           const { data: txns } = await Sclient
             .from("transactions")
             .select("pid")
@@ -115,14 +106,12 @@ const Profile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not logged in");
 
-      // Update users table
       const { error: userError } = await Sclient
         .from("users")
         .update({ uname: fullName })
         .eq("uid", user.id);
       if (userError) throw userError;
 
-      // Update contact in owners or tenants table
       if (role === "Owner") {
         await Sclient.from("owners").update({ contact, name: fullName }).eq("uid", user.id);
       } else if (role === "Tenant") {
@@ -173,231 +162,226 @@ const Profile = () => {
     ? fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : email.slice(0, 2).toUpperCase();
 
-  const roleBadgeStyle = role === "Owner"
-    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
-    : "bg-blue-500/20 text-blue-400 border-blue-500/30";
-
   return (
-    <div className="min-h-[calc(100vh-64px)] px-4 py-8 bg-slate-900/70">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 md:flex-row md:items-start">
+    <div className="min-h-[calc(100vh-64px)] px-4 py-8" style={{
+      background: 'linear-gradient(135deg, #0a0a0f 0%, #0d0d1a 50%, #0a0f0a 100%)',
+      fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    }}>
+      <style>{`
+        .profile-card {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 20px;
+          backdrop-filter: blur(20px);
+          overflow: hidden;
+        }
+        .nav-btn {
+          display: flex;
+          width: 100%;
+          align-items: center;
+          gap: 10px;
+          border-radius: 10px;
+          padding: 10px 14px;
+          font-size: 13.5px;
+          font-family: 'Segoe UI', sans-serif;
+          font-weight: 400;
+          transition: all 0.2s ease;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: rgba(255,255,255,0.4);
+          letter-spacing: 0.01em;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.85); }
+        .nav-btn.active { background: rgba(134,239,172,0.08); color: #86efac; font-weight: 600; }
+        .stat-card-full { 
+          background: rgba(255,255,255,0.025); 
+          border: 1px solid rgba(255,255,255,0.06); 
+          border-radius: 16px; 
+          padding: 20px; 
+          text-align: center;
+          width: 100%;
+        }
+        .right-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; }
+        .property-row { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); transition: all 0.2s ease; margin-bottom: 10px; }
+        .property-row:hover { background: rgba(255,255,255,0.05); border-color: rgba(134,239,172,0.15); }
+        .input-dark { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; color: rgba(255,255,255,0.85); font-family: 'Segoe UI', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s ease; box-sizing: border-box; }
+        .input-dark:focus { border-color: rgba(134,239,172,0.4); }
+        .input-with-icon { position: relative; }
+        .input-with-icon .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); pointer-events: none; display: flex; align-items: center; }
+        .input-with-icon input { padding-left: 38px; }
+        .label-dark { display: block; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+        .btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #4ade80, #22c55e); color: #052e16; font-family: 'Segoe UI', sans-serif; font-weight: 700; font-size: 13.5px; border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s ease; }
+        .avatar-ring { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #4ade80, #16a34a); display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 20px; color: #052e16; margin: 0 auto 14px; box-shadow: 0 0 0 4px rgba(74,222,128,0.12), 0 0 30px rgba(74,222,128,0.15); }
+        .top-bar { height: 3px; background: linear-gradient(90deg, #4ade80, #22d3ee, #a78bfa); width: 100%; }
+        .role-badge { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; margin-top: 8px; }
+        .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0; }
+        .empty-state { padding: 64px 0; text-align: center; color: rgba(255,255,255,0.3); }
+      `}</style>
 
-        {/* ── LEFT PANEL ── */}
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 md:flex-row md:items-start">
+        {/* LEFT PANEL */}
         <div className="flex w-full flex-col gap-4 md:w-72 md:shrink-0">
-          <Card className="shadow-card overflow-hidden">
-            <div className="h-2 w-full bg-gradient-accent" />
-            <CardContent className="pt-6 pb-4 text-center">
-              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-accent text-xl font-bold text-accent-foreground">
-                {initials}
-              </div>
-              <h2 className="font-display text-xl font-bold text-primary-foreground">
-                {fullName || "Your Name"}
-              </h2>
-              <p className="font-body text-sm text-muted-foreground">{email}</p>
+          <div className="profile-card">
+            <div className="top-bar" />
+            <div style={{ padding: '24px 20px 16px', textAlign: 'center' }}>
+              <div className="avatar-ring">{initials}</div>
+              <h2 style={{ fontWeight: 800, fontSize: 19, color: '#fff', margin: 0 }}>{fullName || "Your Name"}</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{email}</p>
               {contact && (
-                <p className="mt-1 font-body text-sm text-muted-foreground flex items-center justify-center gap-1">
-                  <Phone className="h-3 w-3" /> {contact}
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <Phone style={{ width: 12, height: 12 }} /> {contact}
                 </p>
               )}
               {role && (
-                <span className={`mt-2 inline-block rounded-full border px-3 py-0.5 font-body text-xs font-semibold ${roleBadgeStyle}`}>
-                  {role}
-                </span>
+                <span className="role-badge" style={
+                  role === 'Owner'
+                    ? { background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.25)' }
+                    : { background: 'rgba(34,211,238,0.1)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.25)' }
+                }>{role}</span>
               )}
-            </CardContent>
+            </div>
 
-            <div className="px-2 py-2 space-y-0.5">
-              <button
-                onClick={() => setActiveTab("listings")}
-                className={`flex w-full items-center gap-2 rounded-md px-3 py-2 font-body text-sm transition-colors ${activeTab === "listings" ? "bg-accent/10 text-accent font-semibold" : "text-muted-foreground hover:text-primary-foreground"}`}
-              >
-                {role === "Owner" ? <Home className="h-4 w-4" /> : <Key className="h-4 w-4" />}
+            <div style={{ padding: '4px 10px 8px' }}>
+              <button onClick={() => setActiveTab("listings")} className={`nav-btn${activeTab === "listings" ? " active" : ""}`}>
+                {role === "Owner" ? <Home style={{ width: 15, height: 15 }} /> : <Key style={{ width: 15, height: 15 }} />}
                 {role === "Owner" ? "My Listings" : "Rented Properties"}
-                <span className="ml-auto rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                <span style={{ marginLeft: 'auto', fontSize: 11, padding: '1px 7px', borderRadius: 999, background: 'rgba(134,239,172,0.1)', color: '#86efac', fontWeight: 700 }}>
                   {properties.length}
                 </span>
               </button>
-              <button
-                onClick={() => setActiveTab("profile")}
-                className={`flex w-full items-center gap-2 rounded-md px-3 py-2 font-body text-sm transition-colors ${activeTab === "profile" ? "bg-accent/10 text-accent font-semibold" : "text-muted-foreground hover:text-primary-foreground"}`}
-              >
-                <User className="h-4 w-4" /> Edit Profile
-                <ChevronRight className="ml-auto h-3 w-3" />
+              <button onClick={() => setActiveTab("profile")} className={`nav-btn${activeTab === "profile" ? " active" : ""}`}>
+                <User style={{ width: 15, height: 15 }} /> Edit Profile
+                <ChevronRight style={{ marginLeft: 'auto', width: 13, height: 13 }} />
               </button>
-              <button
-                onClick={() => setActiveTab("password")}
-                className={`flex w-full items-center gap-2 rounded-md px-3 py-2 font-body text-sm transition-colors ${activeTab === "password" ? "bg-accent/10 text-accent font-semibold" : "text-muted-foreground hover:text-primary-foreground"}`}
-              >
-                <Lock className="h-4 w-4" /> Change Password
-                <ChevronRight className="ml-auto h-3 w-3" />
+              <button onClick={() => setActiveTab("password")} className={`nav-btn${activeTab === "password" ? " active" : ""}`}>
+                <Lock style={{ width: 15, height: 15 }} /> Change Password
+                <ChevronRight style={{ marginLeft: 'auto', width: 13, height: 13 }} />
               </button>
             </div>
 
-            <div className="border-t border-border px-4 py-3">
-              <button
-                onClick={handleLogout}
-                disabled={loadingLogout}
-                className="flex w-full items-center gap-2 font-body text-sm text-destructive hover:opacity-80 disabled:opacity-50"
-              >
-                <LogOut className="h-4 w-4" />
+            <div className="divider" />
+            <div style={{ padding: '8px 10px 12px' }}>
+              <button onClick={handleLogout} disabled={loadingLogout} className="nav-btn" style={{ color: 'rgba(248,113,113,0.7)' }}>
+                <LogOut style={{ width: 15, height: 15 }} />
                 {loadingLogout ? "Signing out..." : "Sign Out"}
               </button>
             </div>
-          </Card>
+          </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="shadow-card py-3 text-center">
-              <p className="font-display text-2xl font-bold text-accent">{properties.length}</p>
-              <p className="font-body text-xs text-muted-foreground">
-                {role === "Owner" ? "Listings" : "Rented"}
-              </p>
-            </Card>
-            <Card className="shadow-card py-3 text-center">
-              <p className="font-display text-2xl font-bold text-accent">
-                {role === "Owner"
-                  ? properties.filter((p: any) => p.status === "available").length
-                  : properties.length}
-              </p>
-              <p className="font-body text-xs text-muted-foreground">
-                {role === "Owner" ? "Available" : "Active"}
-              </p>
-            </Card>
+          {/* SIMPLIFIED STAT CARD */}
+          <div className="stat-card-full">
+            <p style={{ fontWeight: 800, fontSize: 32, color: '#4ade80', margin: 0 }}>{properties.length}</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4, letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
+              {role === "Owner" ? "Total Listings" : "Total Rented"}
+            </p>
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
-        <div className="flex-1">
-
+        {/* RIGHT PANEL */}
+        <div style={{ flex: 1 }}>
           {activeTab === "listings" && (
-            <Card className="shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="font-display text-xl text-primary-foreground flex items-center gap-2">
+            <div className="right-card">
+              <div style={{ padding: '20px 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <h3 style={{ fontWeight: 800, fontSize: 18, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                   {role === "Owner"
-                    ? <><Home className="h-5 w-5 text-accent" /> My Listings</>
-                    : <><Key className="h-5 w-5 text-accent" /> Rented Properties</>
+                    ? <><Home style={{ width: 18, height: 18, color: '#4ade80' }} /> My Listings</>
+                    : <><Key style={{ width: 18, height: 18, color: '#4ade80' }} /> Rented Properties</>
                   }
-                </CardTitle>
+                </h3>
                 {role === "Owner" && (
-                  <Button
-                    onClick={() => navigate("/add-property")}
-                    size="sm"
-                    className="bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90"
-                  >
-                    <Plus className="mr-1 h-4 w-4" /> Add New
-                  </Button>
+                  <button className="btn-primary" style={{ padding: '8px 14px', fontSize: 12 }} onClick={() => navigate("/add-property")}>
+                    <Plus style={{ width: 14, height: 14 }} /> Add New
+                  </button>
                 )}
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div style={{ padding: 20 }}>
                 {properties.length === 0 ? (
-                  <div className="py-16 text-center">
-                    <Building2 className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-                    <p className="font-body text-muted-foreground">
-                      {role === "Owner"
-                        ? "You haven't listed any properties yet."
-                        : "You haven't rented any properties yet."}
-                    </p>
-                    {role === "Owner" && (
-                      <Button
-                        onClick={() => navigate("/add-property")}
-                        className="mt-4 bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90"
-                      >
-                        Add Your First Property
-                      </Button>
-                    )}
-                    {role === "Tenant" && (
-                      <Button
-                        onClick={() => navigate("/properties")}
-                        className="mt-4 bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90"
-                      >
-                        Browse Properties
-                      </Button>
-                    )}
+                  <div className="empty-state">
+                    <Building2 style={{ width: 40, height: 40 }} />
+                    <p style={{ fontSize: 14 }}>{role === "Owner" ? "You haven't listed any properties yet." : "You haven't rented any properties yet."}</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div>
                     {properties.map((p) => (
-                      <div key={p.pid} className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-muted/30 transition-colors">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-body font-semibold text-primary-foreground truncate">{p.title}</p>
-                          <p className="font-body text-sm text-muted-foreground truncate">{p.address}, {p.city}</p>
-                          <p className="font-body text-xs text-muted-foreground capitalize mt-0.5">
+                      <div key={p.pid} className="property-row">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: 700, fontSize: 14.5, color: '#fff', margin: 0 }}>{p.title}</p>
+                          <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>{p.address}, {p.city}</p>
+                          <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', margin: '3px 0 0', textTransform: 'capitalize' }}>
                             {p.ptype} · {p.rooms} rooms · {p.bath} bath
                           </p>
                         </div>
-                        <div className="ml-4 text-right shrink-0">
-                          <p className="font-body font-semibold text-accent">₹{Number(p.price).toLocaleString()}</p>
+                        <div style={{ marginLeft: 16, textAlign: 'right', flexShrink: 0 }}>
+                          <p style={{ fontWeight: 700, fontSize: 15, color: '#4ade80', margin: 0 }}>₹{Number(p.price).toLocaleString()}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {activeTab === "profile" && (
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="font-display text-xl text-primary-foreground flex items-center gap-2">
-                  <User className="h-5 w-5 text-accent" /> Edit Profile
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleUpdateProfile} className="space-y-4 max-w-md">
-                  <div className="space-y-2">
-                    <Label className="font-body text-sm text-primary-foreground">Full Name</Label>
-                    <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" required className="text-primary-foreground" />
+            <div className="right-card">
+              <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <h3 style={{ fontWeight: 800, fontSize: 18, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <User style={{ width: 18, height: 18, color: '#4ade80' }} /> Edit Profile
+                </h3>
+              </div>
+              <div style={{ padding: 24 }}>
+                <form onSubmit={handleUpdateProfile} style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div>
+                    <label className="label-dark">Full Name</label>
+                    <input className="input-dark" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" required />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="font-body text-sm text-primary-foreground">Contact</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="+91 98765 43210" className="pl-9 text-primary-foreground" />
+                  <div>
+                    <label className="label-dark">Contact</label>
+                    <div className="input-with-icon">
+                      <span className="icon"><Phone style={{ width: 14, height: 14 }} /></span>
+                      <input className="input-dark" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="+91 98765 43210" />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="font-body text-sm text-primary-foreground">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input value={email} disabled className="pl-9 text-primary-foreground opacity-60 cursor-not-allowed" />
+                  <div>
+                    <label className="label-dark">Email</label>
+                    <div className="input-with-icon">
+                      <span className="icon"><Mail style={{ width: 14, height: 14 }} /></span>
+                      <input className="input-dark" value={email} disabled />
                     </div>
-                    <p className="font-body text-xs text-muted-foreground">Email cannot be changed.</p>
                   </div>
-                  <Button type="submit" disabled={loadingProfile} className="bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90">
-                    <Save className="mr-2 h-4 w-4" />
-                    {loadingProfile ? "Saving..." : "Save Changes"}
-                  </Button>
+                  <button type="submit" className="btn-primary" disabled={loadingProfile}>
+                    <Save style={{ width: 14, height: 14 }} /> {loadingProfile ? "Saving..." : "Save Changes"}
+                  </button>
                 </form>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {activeTab === "password" && (
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="font-display text-xl text-primary-foreground flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-accent" /> Change Password
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
-                  <div className="space-y-2">
-                    <Label className="font-body text-sm text-primary-foreground">New Password</Label>
-                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="text-primary-foreground" />
+            <div className="right-card">
+              <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <h3 style={{ fontWeight: 800, fontSize: 18, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Lock style={{ width: 18, height: 18, color: '#4ade80' }} /> Change Password
+                </h3>
+              </div>
+              <div style={{ padding: 24 }}>
+                <form onSubmit={handleChangePassword} style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div>
+                    <label className="label-dark">New Password</label>
+                    <input className="input-dark" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="font-body text-sm text-primary-foreground">Confirm Password</Label>
-                    <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="text-primary-foreground" />
+                  <div>
+                    <label className="label-dark">Confirm Password</label>
+                    <input className="input-dark" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
                   </div>
-                  <Button type="submit" disabled={loadingPassword} className="bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90">
-                    <Lock className="mr-2 h-4 w-4" />
-                    {loadingPassword ? "Updating..." : "Update Password"}
-                  </Button>
+                  <button type="submit" className="btn-primary" disabled={loadingPassword}>
+                    <Lock style={{ width: 14, height: 14 }} /> {loadingPassword ? "Updating..." : "Update Password"}
+                  </button>
                 </form>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
-
         </div>
       </div>
     </div>

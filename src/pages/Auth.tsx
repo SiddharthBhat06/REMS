@@ -98,125 +98,158 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4">
-      <Card className="w-full max-w-md shadow-card">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-accent">
-            <Building2 className="h-6 w-6 text-accent-foreground" />
-          </div>
-          <CardTitle className="font-display text-2xl text-primary-foreground">
-            {isLogin ? "Welcome Back" : "Create Account"}
-          </CardTitle>
-          <CardDescription className="font-body">
-            {isLogin ? "Sign in to manage your properties" : "Start managing real estate today"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4" style={{
+      background: 'linear-gradient(135deg, #0a0a0f 0%, #0d0d1a 50%, #0a0f0a 100%)',
+      fontFamily: "'DM Sans', sans-serif",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap');
+
+        .glass-panel {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 24px;
+          backdrop-filter: blur(20px);
+          overflow: hidden;
+        }
+        .input-dark {
+          width: 100%;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          padding: 12px 14px;
+          color: rgba(255, 255, 255, 0.9);
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          outline: none;
+          transition: all 0.2s ease;
+          box-sizing: border-box;
+        }
+        .input-dark:focus {
+          border-color: rgba(134,239,172,0.4);
+          background: rgba(255,255,255,0.06);
+        }
+        .label-dark {
+          display: block;
+          font-size: 11px;
+          font-weight: 600;
+          color: rgba(255,255,255,0.4);
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          margin-bottom: 8px;
+          margin-left: 4px;
+        }
+        .role-btn {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          padding: 16px;
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.02);
+          color: rgba(255,255,255,0.4);
+          transition: all 0.2s ease;
+        }
+        .role-btn.active {
+          border-color: #4ade80;
+          background: rgba(74, 222, 128, 0.05);
+          color: #4ade80;
+          box-shadow: 0 0 15px rgba(74, 222, 128, 0.1);
+        }
+        .btn-auth {
+          width: 100%;
+          padding: 14px;
+          background: linear-gradient(135deg, #4ade80, #22c55e);
+          color: #052e16;
+          font-family: 'DM Sans', sans-serif;
+          font-weight: 700;
+          border: none;
+          border-radius: 14px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          margin-top: 10px;
+        }
+        .btn-auth:hover { opacity: 0.9; transform: translateY(-1px); }
+        .top-line {
+          height: 4px;
+          background: linear-gradient(90deg, #4ade80, #22d3ee);
+          width: 100%;
+        }
+      `}</style>
+
+      <div className="w-full max-w-md glass-panel shadow-2xl">
+        <div className="top-line" />
+        
+        <div className="p-8">
+          <header className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{
+              background: 'rgba(74, 222, 128, 0.1)',
+              border: '1px solid rgba(74, 222, 128, 0.2)'
+            }}>
+              <Building2 className="h-7 w-7 text-[#4ade80]" />
+            </div>
+            <h2 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 28, color: '#fff', margin: 0 }}>
+              {isLogin ? "Welcome Back" : "Create Account"}
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14, marginTop: 6 }}>
+              {isLogin ? "Sign in to manage your properties" : "Start managing real estate today"}
+            </p>
+          </header>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="font-body text-sm text-primary-foreground">Full Name</Label>
-                  <Input 
-                    id="fullName" 
-                    value={fullName} 
-                    onChange={(e) => setFullName(e.target.value)} 
-                    placeholder="John Doe" 
-                    required 
-                    className="text-primary-foreground" 
-                  />
+                <div>
+                  <label className="label-dark">Full Name</label>
+                  <input className="input-dark" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" required />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="contact" className="font-body text-sm text-primary-foreground">Contact (Phone)</Label>
-                  <Input 
-                    id="contact" 
-                    value={contact} 
-                    onChange={(e) => setContact(e.target.value)} 
-                    placeholder="+1 234 567 8901" 
-                    className="text-primary-foreground" 
-                  />
+                <div>
+                  <label className="label-dark">Contact (Phone)</label>
+                  <input className="input-dark" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="+1 234 567 8901" />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label>I am a</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setRole("Owner")}
-                      className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
-                        role === "Owner"
-                          ? "border-accent bg-accent/10 text-accent"
-                          : "border-border hover:border-accent/50"
-                      }`}
-                    >
-                      <Building2 className="h-6 w-6" />
-                      <span className="text-sm font-semibold">Owner</span>
+                <div>
+                  <label className="label-dark">Select Role</label>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setRole("Owner")} className={`role-btn ${role === "Owner" ? "active" : ""}`}>
+                      <Building2 className="h-5 w-5" />
+                      <span className="text-xs font-bold uppercase tracking-wider">Owner</span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setRole("Tenant")}
-                      className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
-                        role === "Tenant"
-                          ? "border-accent bg-accent/10 text-accent"
-                          : "border-border hover:border-accent/50"
-                      }`}
-                    >
-                      <Home className="h-6 w-6" />
-                      <span className="text-sm font-semibold">Tenant</span>
+                    <button type="button" onClick={() => setRole("Tenant")} className={`role-btn ${role === "Tenant" ? "active" : ""}`}>
+                      <Home className="h-5 w-5" />
+                      <span className="text-xs font-bold uppercase tracking-wider">Tenant</span>
                     </button>
                   </div>
                 </div>
               </>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="font-body text-sm text-primary-foreground">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                placeholder="you@example.com" 
-                required 
-                className="text-primary-foreground" 
-              />
+            <div>
+              <label className="label-dark">Email Address</label>
+              <input type="email" className="input-dark" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="font-body text-sm text-primary-foreground">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                placeholder="••••••••" 
-                required 
-                minLength={6} 
-                className="text-primary-foreground" 
-              />
+            <div>
+              <label className="label-dark">Password</label>
+              <input type="password" className="input-dark" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={loading} 
-              className="w-full bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90"
-            >
-              {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
-            </Button>
+            <button type="submit" disabled={loading} className="btn-auth">
+              {loading ? "Authenticating..." : isLogin ? "Sign In" : "Create Account"}
+            </button>
           </form>
 
-          <p className="mt-4 text-center font-body text-sm text-muted-foreground">
+          <p className="mt-6 text-center text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button 
-              onClick={() => setIsLogin(!isLogin)} 
-              className="font-semibold text-accent hover:underline"
-            >
+            <button onClick={() => setIsLogin(!isLogin)} className="font-bold text-[#4ade80] hover:underline transition-all">
               {isLogin ? "Sign Up" : "Sign In"}
             </button>
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

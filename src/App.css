@@ -1,30 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700;800&display=swap');
+
+:root {
+  --accent-green: #4ade80;
+  --accent-glow: rgba(74, 222, 128, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.07);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  /* Matching your main background gradient */
+  background: linear-gradient(135deg, #0a0a0f 0%, #0d0d1a 50%, #0a0f0a 100%);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  width: 100%;
 }
 
+/* Logos */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
-  transition: filter 300ms;
+  transition: filter 300ms, transform 0.3s ease;
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em var(--accent-glow));
+  transform: scale(1.05);
 }
+
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em rgba(97, 218, 251, 0.3));
 }
 
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -33,10 +56,68 @@
   }
 }
 
+/* Glassmorphism Card */
 .card {
-  padding: 2em;
+  padding: 2.5em;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  margin: 2rem 0;
+  transition: border-color 0.3s ease;
+}
+
+.card:hover {
+  border-color: rgba(74, 222, 128, 0.2);
+}
+
+/* Typography */
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 3.2em;
+  line-height: 1.1;
+  color: #fff;
+  margin-bottom: 0.5em;
+}
+
+button {
+  border-radius: 12px;
+  border: none;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 700;
+  font-family: inherit;
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  color: #052e16;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--accent-glow);
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
 }
 
 .read-the-docs {
-  color: #888;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.9em;
+  letter-spacing: 0.02em;
+}
+
+a {
+  font-weight: 500;
+  color: var(--accent-green);
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #86efac;
 }

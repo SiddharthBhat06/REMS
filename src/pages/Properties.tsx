@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import PropertyCard from "@/components/PropertyCard";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SlidersHorizontal, Home } from "lucide-react";
+import { Search } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
 interface Property {
@@ -42,6 +40,11 @@ const Properties = () => {
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
 
+  // Statistics Calculation
+  const totalListed = properties.length;
+  const totalSold = soldPids.size;
+  const totalAvailable = totalListed - totalSold;
+
   useEffect(() => {
     const getUser = async () => {
       const { data } = await Sclient.auth.getUser();
@@ -57,10 +60,13 @@ const Properties = () => {
         Sclient.from("owners").select("*"),
         Sclient.from("transactions").select("pid").eq("status", "active"),
       ]);
+
       if (!propResult.error && propResult.data) setProperties(propResult.data);
       if (!ownerResult.error && ownerResult.data) setOwners(ownerResult.data);
-      if (!txResult.error && txResult.data)
-        setSoldPids(new Set(txResult.data.map((t: { pid: string }) => t.pid)));
+      if (!txResult.error && txResult.data) {
+        const pids = new Set(txResult.data.map((t: { pid: string }) => t.pid));
+        setSoldPids(pids);
+      }
       setLoading(false);
     };
     fetchData();
@@ -75,7 +81,9 @@ const Properties = () => {
   const filtered = properties.filter((p) => {
     const matchesSearch =
       search === "" ||
-      [p.title, p.address, p.city].some((f) => f?.toLowerCase().includes(search.toLowerCase()));
+      [p.title, p.address, p.city].some((field) =>
+        field?.toLowerCase().includes(search.toLowerCase())
+      );
     const matchesType = typeFilter === "all" || p.ptype === typeFilter;
     const isSold = soldPids.has(p.pid);
     const matchesAvailability =
@@ -85,95 +93,95 @@ const Properties = () => {
     return matchesSearch && matchesType && matchesAvailability;
   });
 
-  const availableCount = properties.filter((p) => !soldPids.has(p.pid)).length;
-  const soldCount = soldPids.size;
-
   return (
-    <div className="min-h-screen bg-[#15243a]">
-      {/* Page header */}
-      <div className="bg-[#15243a]">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Search Properties</h1>
-              <p className="mt-1 text-sm text-slate-400">Browse and filter through all listed properties</p>
-            </div>
-            {!loading && (
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                <span className="flex items-center gap-1.5 rounded-full border border-emerald-600/40 bg-emerald-900/30 px-3 py-1.5 text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {availableCount} Available
-                </span>
-                <span className="flex items-center gap-1.5 rounded-full border border-rose-600/40 bg-rose-900/30 px-3 py-1.5 text-rose-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
-                  {soldCount} Sold
-                </span>
-                <span className="flex items-center gap-1.5 rounded-full border border-slate-600/50 bg-slate-700/40 px-3 py-1.5 text-slate-300">
-                  <Home className="h-3 w-3" />
-                  {properties.length} Total
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen relative overflow-hidden" style={{
+      background: `radial-gradient(at 0% 0%, rgba(74, 222, 128, 0.05) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%), #050508`,
+      fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    }}>
+      <style>{`
+        .search-bar { display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; backdrop-filter: blur(24px); margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        @media (min-width: 640px) { .search-bar { flex-direction: row; align-items: center; } }
+        .search-input-wrap { position: relative; flex: 1; }
+        .search-input-wrap .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.2); display: flex; align-items: center; pointer-events: none; }
+        .search-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px 12px 42px; color: white; font-size: 14px; outline: none; transition: all 0.2s ease; box-sizing: border-box; }
+        .search-input:focus { border-color: rgba(74, 222, 128, 0.4); background: rgba(255,255,255,0.05); }
+        .filter-select { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 40px 12px 16px; color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+        .filters-wrap { display: flex; gap: 12px; flex-wrap: wrap; }
+        .stats-row { display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
+        .stat-capsule { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 14px; border-radius: 10px; display: flex; align-items: center; gap: 8px; }
+        .stat-n { font-weight: 800; color: #fff; font-size: 14px; }
+        .stat-l { color: rgba(255,255,255,0.4); font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.03em; }
+        .skeleton { height: 320px; border-radius: 24px; background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .top-accent { height: 2px; background: linear-gradient(90deg, #4ade80, #3b82f6); width: 100%; position: fixed; top: 0; left: 0; z-index: 100; opacity: 0.5; }
+      `}</style>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Filter bar */}
-        <div className="mb-8 flex flex-col gap-3 rounded-2xl border border-slate-600/50 bg-slate-700 p-4 shadow-md sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <Input
+      <div className="top-accent" />
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '60px 24px', position: 'relative', zIndex: 10 }}>
+
+        {/* Original Header */}
+        <div style={{ marginBottom: 40 }}>
+          <h1 style={{ fontWeight: 900, fontSize: '2.5rem', color: '#fff', margin: 0, letterSpacing: '-0.03em' }}>
+            Search <span style={{ color: '#4ade80' }}>Properties</span>
+          </h1>
+          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.3)', marginTop: 8, fontWeight: 500 }}>
+            Browse through our curated collection of architectural assets.
+          </p>
+        </div>
+
+        {/* Stats Row */}
+        {!loading && (
+          <div className="stats-row">
+            <div className="stat-capsule">
+              <span className="stat-n">{totalListed}</span>
+              <span className="stat-l">Listed</span>
+            </div>
+            <div className="stat-capsule">
+              <span className="stat-n" style={{ color: '#4ade80' }}>{totalAvailable}</span>
+              <span className="stat-l">Available</span>
+            </div>
+            <div className="stat-capsule">
+              <span className="stat-n" style={{ color: '#ef4444' }}>{totalSold}</span>
+              <span className="stat-l">Sold</span>
+            </div>
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="search-bar">
+          <div className="search-input-wrap">
+            <span className="icon"><Search style={{ width: 18, height: 18 }} /></span>
+            <input
+              className="search-input"
               placeholder="Search by title, address, or city..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 text-slate-200 placeholder:text-slate-500 border-slate-600/50 bg-slate-800/50 focus:bg-slate-800 focus:border-sky-500/60 transition-colors"
             />
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[148px] text-slate-300 border-slate-600/50 bg-slate-800/50 hover:bg-slate-800 hover:border-sky-500/50 transition-colors">
-                <SlidersHorizontal className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent className="border-slate-600 bg-[#1e2d45] text-slate-200">
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Residential">Residential</SelectItem>
-                <SelectItem value="Commercial">Commercial</SelectItem>
-                <SelectItem value="Industrial">Industrial</SelectItem>
-                <SelectItem value="Land">Land</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
-              <SelectTrigger className="w-[158px] text-slate-300 border-slate-600/50 bg-slate-800/50 hover:bg-slate-800 hover:border-sky-500/50 transition-colors">
-                <SelectValue placeholder="Availability" />
-              </SelectTrigger>
-              <SelectContent className="border-slate-600 bg-[#1e2d45] text-slate-200">
-                <SelectItem value="all">All Listings</SelectItem>
-                <SelectItem value="available">Available Only</SelectItem>
-                <SelectItem value="sold">Sold Only</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="filters-wrap">
+            <select className="filter-select" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+              <option value="all">All Types</option>
+              <option value="Residential">Residential</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Industrial">Industrial</option>
+              <option value="Land">Land</option>
+            </select>
+            <select className="filter-select" value={availabilityFilter} onChange={(e) => setAvailabilityFilter(e.target.value)}>
+              <option value="all">Status: All</option>
+              <option value="available">Available</option>
+              <option value="sold">Sold Out</option>
+            </select>
           </div>
         </div>
 
-        {/* Results count */}
-        {!loading && (
-          <p className="mb-4 text-xs text-slate-500 font-medium uppercase tracking-widest">
-            {filtered.length} {filtered.length === 1 ? "property" : "properties"} found
-          </p>
-        )}
-
-        {/* Grid */}
+        {/* Results */}
         {loading ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-72 animate-pulse rounded-2xl bg-slate-700/40" />
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 32 }}>
+            {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="skeleton" />)}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
             {filtered.map((p) => {
               const owner = getOwner(p.uid);
               const isSold = soldPids.has(p.pid);
@@ -203,12 +211,10 @@ const Properties = () => {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-600/50 bg-[#1e2d45] shadow-md">
-              <Search className="h-7 w-7 text-slate-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-300">No properties found</h3>
-            <p className="mt-1 text-sm text-slate-500">Try adjusting your search or filters</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '120px 0', textAlign: 'center' }}>
+            <Search style={{ width: 40, height: 40, color: 'rgba(255,255,255,0.1)', marginBottom: 20 }} />
+            <h3 style={{ fontWeight: 700, fontSize: 22, color: 'rgba(255,255,255,0.5)', margin: 0 }}>No properties found</h3>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.2)', marginTop: 10 }}>Adjust your search or filters.</p>
           </div>
         )}
       </div>

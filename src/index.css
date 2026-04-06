@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+/* REMOVED: Playfair Display and DM Sans imports to prevent mismatched fonts */
 
 @layer base {
   :root {
@@ -45,8 +45,9 @@
     --sidebar-border: 218 40% 24%;
     --sidebar-ring: 199 80% 46%;
 
-    --font-display: 'Playfair Display', serif;
-    --font-body: 'DM Sans', sans-serif;
+    /* UPDATED: Both variables now use Segoe UI for a unified professional look */
+    --font-display: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
     --shadow-card: 0 1px 3px 0 hsl(218 40% 12% / 0.04), 0 4px 16px 0 hsl(218 40% 12% / 0.06);
     --shadow-card-hover: 0 4px 12px 0 hsl(218 40% 12% / 0.08), 0 8px 32px 0 hsl(218 40% 12% / 0.1);
@@ -92,11 +93,11 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-body);
+    font-family: var(--font-body); /* Applies Segoe UI to body text */
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+    font-family: var(--font-display); /* Applies Segoe UI to all headings */
   }
 }
 

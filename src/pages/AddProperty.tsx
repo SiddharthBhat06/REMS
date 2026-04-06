@@ -82,92 +82,153 @@ const AddProperty = () => {
     setLoading(false);
   };
 
-  return (
-    <div className="container mx-auto max-w-2xl px-4 py-8">
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-display text-2xl text-muted">
-            <Plus className="h-6 w-6 text-accent" />
-            Add New Property
-          </CardTitle>
-          <CardDescription className="font-body text-muted-foreground">Fill in the details to list a new property</CardDescription>
-        </CardHeader>
-        <CardContent>
+ return (
+    <div className="min-h-[calc(100vh-64px)] px-4 py-12" style={{
+      background: 'linear-gradient(135deg, #0a0a0f 0%, #0d0d1a 50%, #0a0f0a 100%)',
+      fontFamily: "'DM Sans', sans-serif",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap');
+
+        .glass-panel {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 24px;
+          backdrop-filter: blur(20px);
+          overflow: hidden;
+        }
+        .input-dark {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    
+    background-color: #12121a; 
+  }
+
+  .input-dark option {
+    background-color: #12121a; 
+    color: rgba(255, 255, 255, 0.9);
+  }
+        .input-dark:focus {
+          border-color: rgba(134,239,172,0.4);
+          background: rgba(255,255,255,0.06);
+        }
+        .label-dark {
+          display: block;
+          font-size: 11px;
+          font-weight: 600;
+          color: rgba(255,255,255,0.4);
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          margin-bottom: 8px;
+          margin-left: 4px;
+        }
+        .btn-submit {
+          width: 100%;
+          padding: 14px;
+          background: linear-gradient(135deg, #4ade80, #22c55e);
+          color: #052e16;
+          font-family: 'DM Sans', sans-serif;
+          font-weight: 700;
+          border: none;
+          border-radius: 14px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+        .top-bar {
+          height: 4px;
+          background: linear-gradient(90deg, #4ade80, #22d3ee, #a78bfa);
+          width: 100%;
+        }
+      `}</style>
+
+      <div className="mx-auto max-w-2xl glass-panel shadow-2xl">
+        <div className="top-bar" />
+        
+        <div className="p-8">
+          <div className="mb-8">
+            <h2 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 24, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Plus className="h-7 w-7 text-[#4ade80]" />
+              Add New Property
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14, marginTop: 4 }}>Fill in the details to list a new property</p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Title */}
-            <div className="space-y-2">
-              <Label className="font-script text-sm text-muted">Title *</Label>
-              <Input value={form.title} onChange={(e) => update("title", e.target.value)} placeholder="Modern 3BR Apartment" required maxLength={200} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+            <div>
+              <label className="label-dark">Title *</label>
+              <input className="input-dark" value={form.title} onChange={(e) => update("title", e.target.value)} placeholder="Modern 3BR Apartment" required maxLength={200} />
             </div>
 
-            {/* Description */}
-            <div className="space-y-2">
-              <Label className="font-body text-sm text-muted">Description</Label>
-              <Textarea value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Describe the property..." rows={3} maxLength={2000} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0" />
+            <div>
+              <label className="label-dark">Description</label>
+              <textarea className="input-dark" value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Describe the property..." rows={3} maxLength={2000} style={{ resize: 'none' }} />
             </div>
 
-            {/* Type */}
-            <div className="space-y-2">
-              <Label className="font-body text-sm text-muted">Type *</Label>
-              <Select value={form.property_type} onValueChange={(v) => update("property_type", v)}>
-                <SelectTrigger className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Residential">Residential</SelectItem>
-                  <SelectItem value="Commercial">Commercial</SelectItem>
-                  <SelectItem value="Industrial">Industrial</SelectItem>
-                  <SelectItem value="Land">Land</SelectItem>
-                </SelectContent>
-              </Select>
+            <div>
+              <label className="label-dark">Property Type *</label>
+              <select className="input-dark" value={form.property_type} onChange={(e) => update("property_type", e.target.value)} style={{ appearance: 'none' }}>
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Industrial">Industrial</option>
+                <option value="Land">Land</option>
+              </select>
             </div>
 
-            {/* Price, Beds, Baths, Area */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Price (₹) *</Label>
-                <Input type="number" value={form.price} onChange={(e) => update("price", e.target.value)} placeholder="250000" required min="0" className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+              <div>
+                <label className="label-dark">Price (₹) *</label>
+                <input type="number" className="input-dark" value={form.price} onChange={(e) => update("price", e.target.value)} placeholder="0" required min="0" />
               </div>
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Rooms</Label>
-                <Input type="number" value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)} placeholder="3" min="0" className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+              <div>
+                <label className="label-dark">Rooms</label>
+                <input type="number" className="input-dark" value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)} placeholder="0" min="0" />
               </div>
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Bathrooms</Label>
-                <Input type="number" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} placeholder="2" min="0" className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+              <div>
+                <label className="label-dark">Baths</label>
+                <input type="number" className="input-dark" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} placeholder="0" min="0" />
               </div>
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Area (sqft)</Label>
-                <Input type="number" value={form.area_sqft} onChange={(e) => update("area_sqft", e.target.value)} placeholder="1500" min="0" className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+              <div>
+                <label className="label-dark">Sqft</label>
+                <input type="number" className="input-dark" value={form.area_sqft} onChange={(e) => update("area_sqft", e.target.value)} placeholder="0" min="0" />
               </div>
             </div>
 
-            {/* Address, City, State */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Address *</Label>
-                <Input value={form.address} onChange={(e) => update("address", e.target.value)} placeholder="123 Main St" required maxLength={300} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+              <div>
+                <label className="label-dark">Address *</label>
+                <input className="input-dark" value={form.address} onChange={(e) => update("address", e.target.value)} placeholder="123 Main St" required maxLength={300} />
               </div>
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">City *</Label>
-                <Input value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="New York" required maxLength={100} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+              <div>
+                <label className="label-dark">City *</label>
+                <input className="input-dark" value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="New York" required maxLength={100} />
               </div>
-              <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">State</Label>
-                <Input value={form.state} onChange={(e) => update("state", e.target.value)} placeholder="NY" maxLength={50} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+              <div>
+                <label className="label-dark">State</label>
+                <input className="input-dark" value={form.state} onChange={(e) => update("state", e.target.value)} placeholder="NY" maxLength={50} />
               </div>
             </div>
 
-            {/* Image URL */}
-            <div className="space-y-2">
-              <Label className="font-body text-sm text-muted">Image URL</Label>
-              <Input value={form.iurl} onChange={(e) => update("iurl", e.target.value)} placeholder="https://example.com/image.jpg" maxLength={500} className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
+            <div>
+              <label className="label-dark">Image URL</label>
+              <input className="input-dark" value={form.iurl} onChange={(e) => update("iurl", e.target.value)} placeholder="https://example.com/image.jpg" maxLength={500} />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full bg-gradient-accent font-body font-semibold text-accent-foreground hover:opacity-90">
+            <button type="submit" disabled={loading} className="btn-submit">
               {loading ? "Adding..." : "Add Property"}
-            </Button>
+            </button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
