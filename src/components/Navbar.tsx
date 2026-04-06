@@ -124,7 +124,7 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
                 <DropdownMenuSeparator className="bg-white/5" />
                 <DropdownMenuItem 
                   onClick={() => navigate("/profile")}
-                  className="focus:bg-white/5 focus:text-[#4ade80] cursor-pointer py-2.5"
+                  className="focus:bg-white/5 text-[#4ade80] cursor-pointer py-2.5"
                 >
                   <UserIcon className="mr-2 h-4 w-4" /> 
                   <span className="text-xs font-bold uppercase tracking-wide">Profile</span>
