@@ -123,7 +123,7 @@ const AddProperty = () => {
             {/* Price, Beds, Baths, Area */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="space-y-2">
-                <Label className="font-body text-sm text-muted">Price ($) *</Label>
+                <Label className="font-body text-sm text-muted">Price (₹) *</Label>
                 <Input type="number" value={form.price} onChange={(e) => update("price", e.target.value)} placeholder="250000" required min="0" className="font-body text-muted border-2 transition-transform border-white/30 focus:border-0"/>
               </div>
               <div className="space-y-2">
