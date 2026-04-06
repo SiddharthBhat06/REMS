@@ -35,15 +35,30 @@ const Sclient = createClient(supabaseUrl, supabaseKey);
 const Properties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
+  const [soldPids, setSoldPids] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [availabilityFilter, setAvailabilityFilter] = useState("all");
+
+  // Retrieve the currently logged-in user's uid from Supabase Auth
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await Sclient.auth.getUser();
+      setCurrentUserId(data?.user?.id ?? undefined);
+    };
+    getUser();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [propResult, ownerResult] = await Promise.all([
+      const [propResult, ownerResult, txResult] = await Promise.all([
         Sclient.from("property").select("*").order("rooms", { ascending: false }),
         Sclient.from("owners").select("*"),
+        // Fetch all transactions where status is 'bought'
+        Sclient.from("transactions").select("pid").eq("status", "active"),
       ]);
 
       if (!propResult.error && propResult.data) {
@@ -52,12 +67,21 @@ const Properties = () => {
       if (!ownerResult.error && ownerResult.data) {
         setOwners(ownerResult.data);
       }
+      if (!txResult.error && txResult.data) {
+        const pids = new Set(txResult.data.map((t: { pid: string }) => t.pid));
+        setSoldPids(pids);
+      }
       setLoading(false);
     };
     fetchData();
   }, []);
 
   const getOwner = (uid: string) => owners.find((o) => o.uid === uid);
+
+  // Called when a purchase is made in a card — mark it sold locally without refetch
+  const handlePurchase = (pid: string) => {
+    setSoldPids((prev) => new Set([...prev, pid]));
+  };
 
   const filtered = properties.filter((p) => {
     const matchesSearch =
@@ -66,7 +90,12 @@ const Properties = () => {
         field?.toLowerCase().includes(search.toLowerCase())
       );
     const matchesType = typeFilter === "all" || p.ptype === typeFilter;
-    return matchesSearch && matchesType;
+    const isSold = soldPids.has(p.pid);
+    const matchesAvailability =
+      availabilityFilter === "all" ||
+      (availabilityFilter === "available" && !isSold) ||
+      (availabilityFilter === "sold" && isSold);
+    return matchesSearch && matchesType && matchesAvailability;
   });
 
   return (
@@ -88,7 +117,7 @@ const Properties = () => {
               className="pl-10 font-body text-muted"
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-[150px] font-body text-muted bg-gradient-accent/10 border-2 transition-transform border-white/30 focus:border-0">
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
@@ -100,6 +129,18 @@ const Properties = () => {
                 <SelectItem value="Commercial">Commercial</SelectItem>
                 <SelectItem value="Industrial">Industrial</SelectItem>
                 <SelectItem value="Land">Land</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Availability filter */}
+            <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
+              <SelectTrigger className="w-[160px] font-body text-muted bg-gradient-accent/10 border-2 transition-transform border-white/30 focus:border-0">
+                <SelectValue placeholder="Availability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Availability</SelectItem>
+                <SelectItem value="available">Available Only</SelectItem>
+                <SelectItem value="sold">Sold Only</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -116,9 +157,12 @@ const Properties = () => {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p) => {
               const owner = getOwner(p.uid);
+              const isSold = soldPids.has(p.pid);
               return (
                 <PropertyCard
                   key={p.pid}
+                  pid={p.pid}
+                  uid={p.uid}
                   title={p.title}
                   descri={p.descri}
                   price={p.price}
@@ -132,6 +176,9 @@ const Properties = () => {
                   iurl={p.iurl}
                   ownerName={owner?.name}
                   ownerContact={owner?.contact ?? undefined}
+                  isSold={isSold}
+                  currentUserId={currentUserId}
+                  onPurchase={handlePurchase}
                 />
               );
             })}
