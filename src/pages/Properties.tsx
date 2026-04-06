@@ -93,7 +93,7 @@ const Properties = () => {
     return matchesSearch && matchesType && matchesAvailability;
   });
 
-  return (
+ return (
     <div className="min-h-screen relative overflow-hidden" style={{
       background: `radial-gradient(at 0% 0%, rgba(74, 222, 128, 0.05) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%), #050508`,
       fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -105,7 +105,31 @@ const Properties = () => {
         .search-input-wrap .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.2); display: flex; align-items: center; pointer-events: none; }
         .search-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px 12px 42px; color: white; font-size: 14px; outline: none; transition: all 0.2s ease; box-sizing: border-box; }
         .search-input:focus { border-color: rgba(74, 222, 128, 0.4); background: rgba(255,255,255,0.05); }
-        .filter-select { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 40px 12px 16px; color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+        
+        .filter-select { 
+          background: rgba(255,255,255,0.03); 
+          border: 1px solid rgba(255,255,255,0.08); 
+          border-radius: 12px; 
+          padding: 12px 40px 12px 16px; 
+          color: rgba(255,255,255,0.8); 
+          font-size: 13px; 
+          font-weight: 600; 
+          text-transform: uppercase; 
+          letter-spacing: 0.05em; 
+          outline: none; 
+          cursor: pointer; 
+          appearance: none; 
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); 
+          background-repeat: no-repeat; 
+          background-position: right 14px center; 
+        }
+
+        /* Specifically styling the options for visibility */
+        .filter-select option {
+          background-color: #121214;
+          color: #ffffff;
+        }
+
         .filters-wrap { display: flex; gap: 12px; flex-wrap: wrap; }
         .stats-row { display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
         .stat-capsule { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 14px; border-radius: 10px; display: flex; align-items: center; gap: 8px; }
@@ -120,7 +144,6 @@ const Properties = () => {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '60px 24px', position: 'relative', zIndex: 10 }}>
 
-        {/* Original Header */}
         <div style={{ marginBottom: 40 }}>
           <h1 style={{ fontWeight: 900, fontSize: '2.5rem', color: '#fff', margin: 0, letterSpacing: '-0.03em' }}>
             Search <span style={{ color: '#4ade80' }}>Properties</span>
@@ -130,7 +153,6 @@ const Properties = () => {
           </p>
         </div>
 
-        {/* Stats Row */}
         {!loading && (
           <div className="stats-row">
             <div className="stat-capsule">
@@ -148,7 +170,6 @@ const Properties = () => {
           </div>
         )}
 
-        {/* Filters */}
         <div className="search-bar">
           <div className="search-input-wrap">
             <span className="icon"><Search style={{ width: 18, height: 18 }} /></span>
@@ -175,7 +196,6 @@ const Properties = () => {
           </div>
         </div>
 
-        {/* Results */}
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 32 }}>
             {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="skeleton" />)}
