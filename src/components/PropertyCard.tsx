@@ -43,9 +43,10 @@ const PropertyCard = ({
   const [buyError, setBuyError] = useState<string | null>(null);
   const [bought, setBought] = useState(isSold);
   const imgSrc = iurl || imager;
+  const isOwner = currentUserId === uid;
 
   const handleBuy = async () => {
-    if (bought || !currentUserId) return;
+    if (bought || !currentUserId || isOwner) return;
     setBuying(true);
     setBuyError(null);
 
@@ -146,28 +147,21 @@ const PropertyCard = ({
               style={{ maxWidth: "600px", fontFamily: "system-ui, -apple-system, sans-serif" }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Image header - Height reduced from h-64 to h-48 */}
               <div className="relative h-48 overflow-hidden bg-[#0d0d1a]">
                 <img
                   src={imgSrc} alt={title}
                   className={`h-full w-full object-cover ${bought ? "grayscale-[60%] brightness-50" : "brightness-90"}`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent" />
-
-                {/* Close button — top right for better visibility */}
                 <button
                   onClick={() => setOpen(false)}
                   className="absolute top-4 right-4 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/50 border border-white/10 text-white hover:bg-rose-500/80 hover:border-white/30 transition-all"
                 >
                   <X className="h-4 w-4" />
                 </button>
-
-                {/* Property type badge */}
                 <Badge className="absolute right-4 bottom-4 border border-white/10 bg-white/5 backdrop-blur-md text-[9px] font-bold text-white/70 capitalize tracking-wide px-2 py-0.5">
                   {ptype}
                 </Badge>
-
-                {/* Sold / Available pill */}
                 <div className={`absolute left-4 bottom-4 flex items-center gap-1.5 rounded-full px-2 py-0.5 backdrop-blur-md border text-[9px] font-bold tracking-wider uppercase ${
                   bought ? "bg-black/40 border-rose-500/40 text-rose-300" : "bg-black/40 border-[#4ade80]/40 text-[#4ade80]"
                 }`}>
@@ -177,7 +171,6 @@ const PropertyCard = ({
               </div>
 
               <div className="p-6 space-y-4">
-                {/* Title + address - Tightened vertical spacing */}
                 <div className="space-y-0.5">
                   <h2 className="text-2xl font-black text-white tracking-tight">{title}</h2>
                   <div className="flex items-center gap-2 text-white/40 text-[11px]">
@@ -186,20 +179,17 @@ const PropertyCard = ({
                   </div>
                 </div>
 
-                {/* Price - Reduced font size slightly */}
                 <div className="flex items-baseline gap-2.5">
                   <p className="text-3xl font-black text-white tracking-tighter">₹{price.toLocaleString()}</p>
                   <p className="text-[8px] text-[#4ade80] font-bold uppercase tracking-widest">Market Valuation</p>
                 </div>
 
-                {/* Description - Added line clamp to keep vertical height predictable */}
                 {descri && (
                   <p className="text-xs text-white/60 leading-relaxed border-l-2 border-[#4ade80]/30 pl-3 italic line-clamp-2">
                     {descri}
                   </p>
                 )}
 
-                {/* Stats grid - Reduced vertical padding */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { icon: BedDouble, label: "Beds", value: rooms },
@@ -214,7 +204,6 @@ const PropertyCard = ({
                   ))}
                 </div>
 
-                {/* Owner contact - Condensed layout */}
                 <div className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-7 w-7 rounded-full bg-[#4ade80]/10 border border-[#4ade80]/20 flex items-center justify-center shrink-0">
@@ -230,12 +219,10 @@ const PropertyCard = ({
                   </div>
                 </div>
 
-                {/* Error */}
                 {buyError && (
                   <p className="text-[10px] text-rose-400 text-center">{buyError}</p>
                 )}
 
-                {/* CTA - Fixed height button */}
                 <div className="pt-0.5">
                   {bought ? (
                     <div className="flex items-center gap-3 p-3 rounded-xl border border-rose-500/20 bg-rose-500/5">
@@ -245,6 +232,16 @@ const PropertyCard = ({
                       <div>
                         <p className="text-[10px] font-black text-rose-300 uppercase tracking-widest">Property Sold</p>
                         <p className="text-[9px] text-rose-400/60 mt-0.5">No longer available for purchase.</p>
+                      </div>
+                    </div>
+                  ) : isOwner ? (
+                    <div className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                      <div className="h-7 w-7 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                        <User className="h-3.5 w-3.5 text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest">Your Listing</p>
+                        <p className="text-[9px] text-amber-400/60 mt-0.5">You cannot purchase your own property.</p>
                       </div>
                     </div>
                   ) : (
