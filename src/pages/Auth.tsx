@@ -54,6 +54,9 @@ async function sendWelcomeEmail(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth component
+// ─────────────────────────────────────────────────────────────────────────────
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");

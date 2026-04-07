@@ -31,13 +31,13 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "onboarding@resend.dev", // Use Resend's default or your verified domain
         to: email,
-        subject: "Welcome to EstateHub 🏡",
+        subject: "Welcome to REMS 🏡",
         html: `
           <h2>Hi ${fullName},</h2>
-          <p>Welcome to <strong>EstateHub</strong>!</p>
+          <p>Welcome to <strong>REMS</strong>!</p>
           <p>Your account has been created as a <strong>${role}</strong>.</p>
           <p>Start exploring properties today.</p>
-          <br/><p>— The EstateHub Team</p>
+          <br/><p>— The REMS Team</p>
         `,
       }),
     });
