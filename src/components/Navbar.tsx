@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
-import { Building2, LogOut, Menu, X, User as UserIcon, Settings, PlusCircle, Search } from "lucide-react";
+import { Building2, LogOut, Menu, X, User as UserIcon, Settings, PlusCircle, Search, LayoutDashboard } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,18 +21,16 @@ const Sclient = createClient(supabaseUrl, supabaseKey);
 
 const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<string | null>(null); // State to store the user's role
+  const [role, setRole] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  
 
-  // Helper function to fetch role from your 'users' table
   const fetchUserRole = async (userId: string) => {
-const { data, error } = await Sclient // Use Sclient if that's what you named it
-  .from("users")
-  .select("role")
-  .eq("uid", userId)
-  .single();
+    const { data, error } = await Sclient
+      .from("users")
+      .select("role")
+      .eq("uid", userId)
+      .single();
 
     if (!error && data) {
       setRole(data.role);
@@ -42,21 +40,19 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
   };
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) fetchUserRole(currentUser.id);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
         fetchUserRole(currentUser.id);
       } else {
-        setRole(null); // Clear role on logout
+        setRole(null);
       }
     });
 
@@ -70,7 +66,7 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
   };
 
   return (
-    <nav 
+    <nav
       className="sticky top-0 z-[100] w-full border-b border-white/10 bg-[#0a0a0f]/80 backdrop-blur-md"
       style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
     >
@@ -90,7 +86,14 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
             Search Properties
           </Link>
 
-          {/* Render ONLY if user is an Owner */}
+          {/* Dashboard — Owner only */}
+          {user && role === "Owner" && (
+            <Link to="/dashboard" className="text-[13px] font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-[#4ade80]">
+              Dashboard
+            </Link>
+          )}
+
+          {/* Add Property — Owner only */}
           {role === "Owner" && (
             <Link to="/add-property" className="text-[13px] font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-[#4ade80]">
               Add Property
@@ -109,9 +112,9 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="w-56 mt-2 border border-white/10 bg-[#0a0a0f] shadow-2xl" 
-                align="end" 
+              <DropdownMenuContent
+                className="w-56 mt-2 border border-white/10 bg-[#0a0a0f] shadow-2xl"
+                align="end"
                 forceMount
                 style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
               >
@@ -122,21 +125,21 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-white/5" />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => navigate("/profile")}
                   className="focus:bg-white/5 text-[#4ade80] cursor-pointer py-2.5"
                 >
-                  <UserIcon className="mr-2 h-4 w-4" /> 
+                  <UserIcon className="mr-2 h-4 w-4" />
                   <span className="text-xs font-bold uppercase tracking-wide">Profile</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-white/5" />
                 <DropdownMenuItem asChild className="p-1">
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleLogout} 
+                  <Button
+                    variant="ghost"
+                    onClick={handleLogout}
                     className="w-full justify-start gap-2 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors h-9 px-2"
                   >
-                    <LogOut className="h-4 w-4" /> 
+                    <LogOut className="h-4 w-4" />
                     <span className="text-xs font-bold uppercase tracking-wide">Sign Out</span>
                   </Button>
                 </DropdownMenuItem>
@@ -161,19 +164,30 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
       {menuOpen && (
         <div className="absolute left-0 top-16 w-full border-b border-white/10 bg-[#0a0a0f] px-6 py-8 md:hidden shadow-2xl">
           <div className="flex flex-col gap-6">
-            <Link 
-              to="/properties" 
-              onClick={() => setMenuOpen(false)} 
+            <Link
+              to="/properties"
+              onClick={() => setMenuOpen(false)}
               className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-white/60 hover:text-[#4ade80]"
             >
               <Search className="h-5 w-5" /> Search Properties
             </Link>
 
-            {/* Mobile Render ONLY if user is an Owner */}
+            {/* Mobile Dashboard — Owner only */}
+            {user && role === "Owner" && (
+              <Link
+                to="/dashboard"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-white/60 hover:text-[#4ade80]"
+              >
+                <LayoutDashboard className="h-5 w-5" /> Dashboard
+              </Link>
+            )}
+
+            {/* Mobile Add Property — Owner only */}
             {role === "Owner" && (
-              <Link 
-                to="/add-property" 
-                onClick={() => setMenuOpen(false)} 
+              <Link
+                to="/add-property"
+                onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-white/60 hover:text-[#4ade80]"
               >
                 <PlusCircle className="h-5 w-5" /> Add Property
@@ -181,11 +195,11 @@ const { data, error } = await Sclient // Use Sclient if that's what you named it
             )}
 
             <div className="h-[1px] w-full bg-white/5" />
-            
+
             {user ? (
-              <Button 
-                variant="ghost" 
-                onClick={handleLogout} 
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
                 className="w-full justify-center gap-2 text-rose-400 border border-rose-500/20 bg-rose-500/5 h-12 text-xs font-black uppercase tracking-widest"
               >
                 <LogOut className="h-4 w-4" /> Sign Out

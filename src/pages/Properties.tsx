@@ -37,7 +37,7 @@ const Properties = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [availabilityFilter, setAvailabilityFilter] = useState("all");
+  const [availabilityFilter, setAvailabilityFilter] = useState("available");
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
 
   // Statistics Calculation
