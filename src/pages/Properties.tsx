@@ -33,17 +33,13 @@ const Sclient = createClient(supabaseUrl, supabaseKey);
 const Properties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
-  const [soldPids, setSoldPids] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
 
-  // Statistics Calculation
+  // Statistics — all properties fetched are already available (sold ones excluded at DB level)
   const totalListed = properties.length;
-  const totalSold = soldPids.size;
-  const totalAvailable = totalListed - totalSold;
 
   useEffect(() => {
     const getUser = async () => {
@@ -55,28 +51,30 @@ const Properties = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Fetch only properties that do NOT have an active transaction (i.e. not sold)
       const [propResult, ownerResult, txResult] = await Promise.all([
         Sclient.from("property").select("*").order("rooms", { ascending: false }),
         Sclient.from("owners").select("*"),
         Sclient.from("transactions").select("pid").eq("status", "active"),
       ]);
 
-      if (!propResult.error && propResult.data) setProperties(propResult.data);
-      if (!ownerResult.error && ownerResult.data) setOwners(ownerResult.data);
-      if (!txResult.error && txResult.data) {
-        const pids = new Set(txResult.data.map((t: { pid: string }) => t.pid));
-        setSoldPids(pids);
+      if (!propResult.error && propResult.data) {
+        // Build the set of sold pids from transactions
+        const soldSet = new Set<string>(
+          (txResult.data ?? []).map((t: { pid: string }) => t.pid)
+        );
+        // Only keep properties that are not sold
+        setProperties(propResult.data.filter((p: Property) => !soldSet.has(p.pid)));
       }
+
+      if (!ownerResult.error && ownerResult.data) setOwners(ownerResult.data);
+
       setLoading(false);
     };
     fetchData();
   }, []);
 
   const getOwner = (uid: string) => owners.find((o) => o.uid === uid);
-
-  const handlePurchase = (pid: string) => {
-    setSoldPids((prev) => new Set([...prev, pid]));
-  };
 
   const filtered = properties.filter((p) => {
     const matchesSearch =
@@ -85,15 +83,10 @@ const Properties = () => {
         field?.toLowerCase().includes(search.toLowerCase())
       );
     const matchesType = typeFilter === "all" || p.ptype === typeFilter;
-    const isSold = soldPids.has(p.pid);
-    const matchesAvailability =
-      availabilityFilter === "all" ||
-      (availabilityFilter === "available" && !isSold) ||
-      (availabilityFilter === "sold" && isSold);
-    return matchesSearch && matchesType && matchesAvailability;
+    return matchesSearch && matchesType;
   });
 
- return (
+  return (
     <div className="min-h-screen relative overflow-hidden" style={{
       background: `radial-gradient(at 0% 0%, rgba(74, 222, 128, 0.05) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%), #050508`,
       fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -105,7 +98,6 @@ const Properties = () => {
         .search-input-wrap .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.2); display: flex; align-items: center; pointer-events: none; }
         .search-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px 12px 42px; color: white; font-size: 14px; outline: none; transition: all 0.2s ease; box-sizing: border-box; }
         .search-input:focus { border-color: rgba(74, 222, 128, 0.4); background: rgba(255,255,255,0.05); }
-        
         .filter-select { 
           background: rgba(255,255,255,0.03); 
           border: 1px solid rgba(255,255,255,0.08); 
@@ -123,13 +115,7 @@ const Properties = () => {
           background-repeat: no-repeat; 
           background-position: right 14px center; 
         }
-
-        /* Specifically styling the options for visibility */
-        .filter-select option {
-          background-color: #121214;
-          color: #ffffff;
-        }
-
+        .filter-select option { background-color: #121214; color: #ffffff; }
         .filters-wrap { display: flex; gap: 12px; flex-wrap: wrap; }
         .stats-row { display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
         .stat-capsule { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 14px; border-radius: 10px; display: flex; align-items: center; gap: 8px; }
@@ -156,16 +142,8 @@ const Properties = () => {
         {!loading && (
           <div className="stats-row">
             <div className="stat-capsule">
-              <span className="stat-n">{totalListed}</span>
-              <span className="stat-l">Listed</span>
-            </div>
-            <div className="stat-capsule">
-              <span className="stat-n" style={{ color: '#4ade80' }}>{totalAvailable}</span>
+              <span className="stat-n" style={{ color: '#4ade80' }}>{totalListed}</span>
               <span className="stat-l">Available</span>
-            </div>
-            <div className="stat-capsule">
-              <span className="stat-n" style={{ color: '#ef4444' }}>{totalSold}</span>
-              <span className="stat-l">Sold</span>
             </div>
           </div>
         )}
@@ -188,11 +166,6 @@ const Properties = () => {
               <option value="Industrial">Industrial</option>
               <option value="Land">Land</option>
             </select>
-            <select className="filter-select" value={availabilityFilter} onChange={(e) => setAvailabilityFilter(e.target.value)}>
-              <option value="all">Status: All</option>
-              <option value="available">Available</option>
-              <option value="sold">Sold Out</option>
-            </select>
           </div>
         </div>
 
@@ -204,7 +177,6 @@ const Properties = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
             {filtered.map((p) => {
               const owner = getOwner(p.uid);
-              const isSold = soldPids.has(p.pid);
               return (
                 <PropertyCard
                   key={p.pid}
@@ -223,9 +195,8 @@ const Properties = () => {
                   iurl={p.iurl}
                   ownerName={owner?.name}
                   ownerContact={owner?.contact ?? undefined}
-                  isSold={isSold}
+                  isSold={false}
                   currentUserId={currentUserId}
-                  onPurchase={handlePurchase}
                 />
               );
             })}

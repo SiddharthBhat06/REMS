@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Building2, LogOut, Home, User, Mail, Lock, Save, ChevronRight, Phone, Plus, Key, ShoppingBag,
+  Pencil, X, CheckCircle2, Tag,
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -22,6 +23,16 @@ type Property = {
   bath: number;
 };
 
+type EditForm = {
+  title: string;
+  address: string;
+  city: string;
+  price: string;
+  ptype: string;
+  rooms: string;
+  bath: string;
+};
+
 type ActiveTab = "listings" | "purchased" | "profile" | "password";
 
 const Profile = () => {
@@ -37,6 +48,13 @@ const Profile = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [purchasedProperties, setPurchasedProperties] = useState<Property[]>([]);
   const [activeTab, setActiveTab] = useState<ActiveTab>("listings");
+
+  // Edit / Sold state
+  const [editingPid, setEditingPid] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [markingSold, setMarkingSold] = useState<string | null>(null);
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -58,7 +76,6 @@ const Profile = () => {
       }
 
       if (userData?.role === "Owner") {
-        // Owner's listed properties
         const { data: ownerData } = await Sclient
           .from("owners")
           .select("contact")
@@ -72,7 +89,6 @@ const Profile = () => {
           .eq("uid", user.id);
         setProperties(props ?? []);
 
-        // Owner's PURCHASED properties (as a buyer via tenants → transactions)
         const { data: tenantData } = await Sclient
           .from("tenants")
           .select("tid")
@@ -183,12 +199,228 @@ const Profile = () => {
     }
   };
 
+  // ── Edit listing helpers ───────────────────────────────────────────────────
+  const startEdit = (p: Property) => {
+    setEditingPid(p.pid);
+    setEditForm({
+      title:   p.title,
+      address: p.address,
+      city:    p.city,
+      price:   String(p.price),
+      ptype:   p.ptype,
+      rooms:   String(p.rooms),
+      bath:    String(p.bath),
+    });
+  };
+
+  const cancelEdit = () => { setEditingPid(null); setEditForm(null); };
+
+  const handleSaveEdit = async (pid: string) => {
+    if (!editForm) return;
+    setSavingEdit(true);
+    try {
+      const updates = {
+        title:   editForm.title,
+        address: editForm.address,
+        city:    editForm.city,
+        price:   Number(editForm.price),
+        ptype:   editForm.ptype,
+        rooms:   Number(editForm.rooms),
+        bath:    Number(editForm.bath),
+      };
+
+      const { error } = await Sclient.from("property").update(updates).eq("pid", pid);
+      if (error) throw error;
+
+      setProperties((prev) =>
+        prev.map((p) => p.pid === pid ? { ...p, ...updates } : p)
+      );
+      setEditingPid(null);
+      setEditForm(null);
+      toast({ title: "Listing updated!", className: "bg-green-50 text-green-900 border-green-200" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  // ── Mark as Sold ──────────────────────────────────────────────────────────
+  // Deletes the property from the properties table, removing it from the
+  // public listings page entirely.
+  const handleMarkSold = async (pid: string, title: string) => {
+    if (!window.confirm(`Mark "${title}" as sold? It will be removed from the listings page.`)) return;
+    setMarkingSold(pid);
+    try {
+      const { error } = await Sclient.from("property").delete().eq("pid", pid);
+      if (error) throw error;
+
+      setProperties((prev) => prev.filter((p) => p.pid !== pid));
+      toast({ title: "Property marked as sold and removed from listings.", className: "bg-green-50 text-green-900 border-green-200" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setMarkingSold(null);
+    }
+  };
+
   const initials = fullName
     ? fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : email.slice(0, 2).toUpperCase();
 
-  // Reusable property list renderer
-  const PropertyList = ({ items, emptyText }: { items: Property[]; emptyText: string }) => (
+  // ── Owner listing row ─────────────────────────────────────────────────────
+  const OwnerListingRow = ({ p }: { p: Property }) => {
+    const isEditing = editingPid === p.pid;
+
+    if (isEditing && editForm) {
+      return (
+        <div
+          key={p.pid}
+          style={{
+            padding: 16, borderRadius: 14,
+            border: '1px solid rgba(74,222,128,0.25)',
+            background: 'rgba(74,222,128,0.04)',
+            marginBottom: 10,
+          }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label className="label-dark">Title</label>
+              <input className="input-dark" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+            </div>
+            <div>
+              <label className="label-dark">Type</label>
+              <select
+                className="input-dark"
+                value={editForm.ptype}
+                onChange={(e) => setEditForm({ ...editForm, ptype: e.target.value })}
+                style={{ appearance: 'none' }}
+              >
+                <option>Residential</option>
+                <option>Commercial</option>
+                <option>Industrial</option>
+                <option>Land</option>
+              </select>
+            </div>
+            <div>
+              <label className="label-dark">Address</label>
+              <input className="input-dark" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
+            </div>
+            <div>
+              <label className="label-dark">City</label>
+              <input className="input-dark" value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} />
+            </div>
+            <div>
+              <label className="label-dark">Price (₹)</label>
+              <input className="input-dark" type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <label className="label-dark">Rooms</label>
+                <input className="input-dark" type="number" value={editForm.rooms} onChange={(e) => setEditForm({ ...editForm, rooms: e.target.value })} />
+              </div>
+              <div>
+                <label className="label-dark">Baths</label>
+                <input className="input-dark" type="number" value={editForm.bath} onChange={(e) => setEditForm({ ...editForm, bath: e.target.value })} />
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn-primary"
+              style={{ padding: '8px 16px', fontSize: 12 }}
+              onClick={() => handleSaveEdit(p.pid)}
+              disabled={savingEdit}
+            >
+              <Save style={{ width: 13, height: 13 }} />
+              {savingEdit ? "Saving…" : "Save"}
+            </button>
+            <button
+              onClick={cancelEdit}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 14px', fontSize: 12, fontWeight: 600,
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 10, color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+              }}
+            >
+              <X style={{ width: 13, height: 13 }} /> Cancel
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={p.pid} className="property-row" style={{ alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontWeight: 700, fontSize: 14.5, color: '#fff', margin: 0 }}>{p.title}</p>
+          <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>{p.address}, {p.city}</p>
+          <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', margin: '3px 0 0', textTransform: 'capitalize' }}>
+            {p.ptype} · {p.rooms} rooms · {p.bath} bath
+          </p>
+        </div>
+        <div style={{ marginLeft: 16, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          <p style={{ fontWeight: 700, fontSize: 15, color: '#4ade80', margin: 0 }}>₹{Number(p.price).toLocaleString()}</p>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {/* Edit button */}
+            <button
+              onClick={() => startEdit(p)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '5px 11px', fontSize: 11, fontWeight: 700,
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, color: 'rgba(255,255,255,0.6)', cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(74,222,128,0.1)';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(74,222,128,0.3)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#4ade80';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.1)';
+                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)';
+              }}
+            >
+              <Pencil style={{ width: 11, height: 11 }} /> Edit
+            </button>
+
+            {/* Mark as Sold button */}
+            <button
+              onClick={() => handleMarkSold(p.pid, p.title)}
+              disabled={markingSold === p.pid}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '5px 11px', fontSize: 11, fontWeight: 700,
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                borderRadius: 8, color: 'rgba(248,113,113,0.8)', cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                opacity: markingSold === p.pid ? 0.6 : 1,
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.18)';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.4)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#f87171';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.2)';
+                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(248,113,113,0.8)';
+              }}
+            >
+              <Tag style={{ width: 11, height: 11 }} />
+              {markingSold === p.pid ? "Removing…" : "Mark Sold"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Reusable tenant property list
+  const TenantPropertyList = ({ items, emptyText }: { items: Property[]; emptyText: string }) => (
     <div style={{ padding: 20 }}>
       {items.length === 0 ? (
         <div className="empty-state">
@@ -286,6 +518,7 @@ const Profile = () => {
         .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0; }
         .empty-state { padding: 64px 0; text-align: center; color: rgba(255,255,255,0.3); }
         .purchased-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; background: rgba(125,211,252,0.1); color: #7dd3fc; border: 1px solid rgba(125,211,252,0.2); margin-top: 5px; }
+        select.input-dark option { background: #0d0d1a; color: #fff; }
       `}</style>
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 md:flex-row md:items-start">
@@ -312,7 +545,6 @@ const Profile = () => {
             </div>
 
             <div style={{ padding: '4px 10px 8px' }}>
-              {/* My Listings — shown for Owner */}
               {role === "Owner" && (
                 <button onClick={() => setActiveTab("listings")} className={`nav-btn${activeTab === "listings" ? " active" : ""}`}>
                   <Home style={{ width: 15, height: 15 }} />
@@ -323,7 +555,6 @@ const Profile = () => {
                 </button>
               )}
 
-              {/* Rented Properties — shown for Tenant */}
               {role === "Tenant" && (
                 <button onClick={() => setActiveTab("listings")} className={`nav-btn${activeTab === "listings" ? " active" : ""}`}>
                   <Key style={{ width: 15, height: 15 }} />
@@ -334,7 +565,6 @@ const Profile = () => {
                 </button>
               )}
 
-              {/* Purchased Properties — shown for Owner */}
               {role === "Owner" && (
                 <button onClick={() => setActiveTab("purchased")} className={`nav-btn${activeTab === "purchased" ? " active-blue" : ""}`}>
                   <ShoppingBag style={{ width: 15, height: 15 }} />
@@ -403,10 +633,26 @@ const Profile = () => {
                   </button>
                 )}
               </div>
-              <PropertyList
-                items={properties}
-                emptyText={role === "Owner" ? "You haven't listed any properties yet." : "You haven't rented any properties yet."}
-              />
+
+              <div style={{ padding: 20 }}>
+                {role === "Owner" ? (
+                  properties.length === 0 ? (
+                    <div className="empty-state">
+                      <Building2 style={{ width: 40, height: 40 }} />
+                      <p style={{ fontSize: 14 }}>You haven't listed any properties yet.</p>
+                    </div>
+                  ) : (
+                    <div>
+                      {properties.map((p) => <OwnerListingRow key={p.pid} p={p} />)}
+                    </div>
+                  )
+                ) : (
+                  <TenantPropertyList
+                    items={properties}
+                    emptyText="You haven't rented any properties yet."
+                  />
+                )}
+              </div>
             </div>
           )}
 
