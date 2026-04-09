@@ -28,6 +28,7 @@ interface PropertyCardProps {
   ownerContact?: string;
   isSold: boolean;
   currentUserId?: string;
+  currentusername?: string;
   onPurchase?: (pid: string) => void;
 }
 
@@ -36,7 +37,7 @@ const imager =
 
 const PropertyCard = ({
   pid, uid, title, descri, price, address, city, state, rooms, bath, ssqft,
-  ptype, iurl, ownerName, ownerContact, isSold, currentUserId, onPurchase,
+  ptype, iurl, ownerName, ownerContact, isSold, currentUserId, currentusername, onPurchase,
 }: PropertyCardProps) => {
   const [open, setOpen]               = useState(false);
   const [sending, setSending]         = useState(false);
@@ -112,18 +113,7 @@ const PropertyCard = ({
       const tname = meUser?.uname ?? "A user";
 
       // 3c — Fire edge function (non-fatal if it fails)
-      const { error: fnError } = await Sclient.functions.invoke("property-interested", {
-        body: {
-          email:        ownerUser.email,
-          fullName:     ownerUser.uname ?? "there",
-          tname,
-          propertyName: title,
-        },
-      });
-
-      if (fnError) {
-        console.warn("Interest notification warning (non-fatal):", fnError.message);
-      }
+      
 
       setInterested(true);
     } catch (err: any) {
@@ -133,7 +123,23 @@ const PropertyCard = ({
       setSending(false);
     }
   };
-
+async function propertyinterest(
+  email: string,
+  fullName: string,
+  tname: string,
+  propertyName: string
+): Promise<void> {
+  try {
+    const { error } = await Sclient.functions.invoke("property-interest", {
+      body: { email, fullName, tname, propertyName },
+    });
+    if (error) {
+      console.warn("Notification function error:", error.message);
+    }
+  } catch (err) {
+    console.error("Error invoking notification function:", err);
+  }
+}
   // ── Badge / dot helpers ────────────────────────────────────────────────────
   const statusLabel = isSold ? "Sold" : interested ? "Interested" : "Available";
 
@@ -168,6 +174,7 @@ const PropertyCard = ({
       {statusLabel}
     </div>
   );
+
 
   return (
     <>
@@ -352,7 +359,7 @@ const PropertyCard = ({
                     <Button
                       className="w-full text-xs font-black uppercase tracking-widest bg-[#4ade80] hover:bg-[#22c55e] text-[#052e16] rounded-xl transition-all flex items-center justify-center gap-2"
                       style={{ height: "46px" }}
-                      onClick={(e) => { e.stopPropagation(); handleInterested(); }}
+                      onClick={(e) => { e.stopPropagation(); handleInterested();propertyinterest(ownerContact || "", ownerName || "", currentusername || "", title); }}
                       disabled={sending || !currentUserId}
                     >
                       <HeartHandshake className="h-4 w-4" />

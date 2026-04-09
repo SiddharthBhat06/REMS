@@ -244,6 +244,24 @@ const Profile = () => {
       setSavingEdit(false);
     }
   };
+  async function Propertyupdate(
+  email: string,
+  fullName: string,
+  propertyName: string,
+): Promise<void> {
+  try {
+    const { error } = await Sclient.functions.invoke("property-update", {
+      body: { email, fullName, propertyName },
+    });
+    if (error) {
+      // Non-fatal — log but don't break signup flow
+      console.warn("Welcome email could not be sent:", error.message);
+    }
+  } catch (err) {
+    console.warn("Welcome email error (non-fatal):", err);
+  }
+}
+
 
   // ── Mark as Sold ──────────────────────────────────────────────────────────
   // Deletes the property from the properties table, removing it from the
@@ -329,7 +347,7 @@ const Profile = () => {
             <button
               className="btn-primary"
               style={{ padding: '8px 16px', fontSize: 12 }}
-              onClick={() => handleSaveEdit(p.pid)}
+              onClick={() => {handleSaveEdit(p.pid), Propertyupdate(email, fullName, editForm.title)}}
               disabled={savingEdit}
             >
               <Save style={{ width: 13, height: 13 }} />
