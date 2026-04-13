@@ -12,7 +12,7 @@ const Sclient = createClient(supabaseUrl, supabaseKey);
 
 interface PropertyCardProps {
   pid: string;
-  uid: string;          // owner's uid
+  uid: string;
   title: string;
   descri: string;
   price: number;
@@ -35,95 +35,8 @@ interface PropertyCardProps {
 const imager =
   "https://previews.123rf.com/images/lexlinx/lexlinx2012/lexlinx201200011/161240800-property-logo-home-builder-housing-industry-design-template-idea-for-estate-and-architecture.jpg";
 
-const PropertyCard = ({
-  pid, uid, title, descri, price, address, city, state, rooms, bath, ssqft,
-  ptype, iurl, ownerName, ownerContact, isSold, currentUserId, currentusername, onPurchase,
-}: PropertyCardProps) => {
-  const [open, setOpen]               = useState(false);
-  const [sending, setSending]         = useState(false);
-  const [interested, setInterested]   = useState(false);
-  const [interestError, setInterestError] = useState<string | null>(null);
-
-  const imgSrc  = iurl || imager;
-  const isOwner = currentUserId === uid;
-
-  // ── "I'm Interested" handler ───────────────────────────────────────────────
-  // 1. Fetch the interested user's tenant id
-  // 2. Insert a transaction record (status: "active") for this property
-  // 3. Fetch owner's email + name and fire notification edge function
-  const handleInterested = async () => {
-    if (interested || sending || !currentUserId || isOwner) return;
-    setSending(true);
-    setInterestError(null);
-
-    try {
-      // 1 — Get the current user's tenant record
-      const { data: tenantData, error: tenantErr } = await Sclient
-        .from("tenants")
-        .select("tid")
-        .eq("uid", currentUserId)
-        .maybeSingle();
-
-      if (tenantErr) {
-        console.warn("Tenant lookup warning:", tenantErr.message);
-      }
-
-      // 2 — Insert a transaction record linking this user to the property
-      if (tenantData?.tid) {
-        const { error: txErr } = await Sclient
-          .from("transactions")
-          .insert({ pid, tid: tenantData.tid, status: "active" });
-
-        if (txErr) {
-          // If duplicate, treat as already interested (non-fatal)
-          console.warn("Transaction insert warning:", txErr.message);
-        }
-      } else {
-        // Fallback: insert with uid directly if tenants table isn't used for this user
-        const { error: txErr } = await Sclient
-          .from("transactions")
-          .insert({ pid, uid: currentUserId, status: "active" });
-
-        if (txErr) {
-          console.warn("Transaction insert (uid fallback) warning:", txErr.message);
-        }
-      }
-
-      // 3a — Owner's email & name for notification
-      const { data: ownerUser, error: ownerErr } = await Sclient
-        .from("users")
-        .select("email, uname")
-        .eq("uid", uid)
-        .maybeSingle();
-
-      if (ownerErr || !ownerUser?.email) {
-        // Transaction was still created; just skip the email
-        console.warn("Could not find owner email for notification.");
-        setInterested(true);
-        return;
-      }
-
-      // 3b — Interested user's name
-      const { data: meUser } = await Sclient
-        .from("users")
-        .select("uname")
-        .eq("uid", currentUserId)
-        .maybeSingle();
-
-      const tname = meUser?.uname ?? "A user";
-
-      // 3c — Fire edge function (non-fatal if it fails)
-      
-
-      setInterested(true);
-    } catch (err: any) {
-      setInterestError("Something went wrong. Please try again.");
-      console.error("handleInterested:", err);
-    } finally {
-      setSending(false);
-    }
-  };
-async function propertyinterest(
+// ── Edge function helper ───────────────────────────────────────────────────────
+async function invokePropertyInterest(
   email: string,
   fullName: string,
   tname: string,
@@ -133,21 +46,109 @@ async function propertyinterest(
     const { error } = await Sclient.functions.invoke("property-interest", {
       body: { email, fullName, tname, propertyName },
     });
-    if (error) {
-      console.warn("Notification function error:", error.message);
-    }
+    if (error) console.warn("Notification function error:", error.message);
   } catch (err) {
     console.error("Error invoking notification function:", err);
   }
 }
-  // ── Badge / dot helpers ────────────────────────────────────────────────────
-  const statusLabel = isSold ? "Sold" : interested ? "Interested" : "Available";
 
+const PropertyCard = ({
+  pid, uid, title, descri, price, address, city, state, rooms, bath, ssqft,
+  ptype, iurl, ownerName, ownerContact, isSold, currentUserId, currentusername, onPurchase,
+}: PropertyCardProps) => {
+  const [open, setOpen]             = useState(false);
+  const [sending, setSending]       = useState(false);
+  const [interested, setInterested] = useState(false);
+  const [interestError, setInterestError] = useState<string | null>(null);
+
+  const imgSrc = iurl || imager;
+
+  const handleInterested = async () => {
+    if (interested || sending || !currentUserId) return;
+    setSending(true);
+    setInterestError(null);
+
+    try {
+      // 1 — Only tenants can express interest
+      const { data: tenantData } = await Sclient
+        .from("tenants")
+        .select("tid")
+        .eq("uid", currentUserId)
+        .maybeSingle();
+
+      if (!tenantData?.tid) {
+        setInterestError("Only tenants can express interest. Please complete your tenant profile first.");
+        return;
+      }
+
+      const today    = new Date();
+      const nextYear = new Date(today);
+      nextYear.setFullYear(today.getFullYear() + 1);
+      const fmt = (d: Date) => d.toISOString().split("T")[0];
+
+      const { error: txErr } = await Sclient
+        .from("transactions")
+        .insert({
+          pid,
+          tid:            tenantData.tid,
+          status:         "pending",
+          start_date:     fmt(today),
+          end_date:       fmt(nextYear),
+          monthly_rent:   price / 12,
+          deposit_amount: price / 12,
+        });
+
+      if (txErr) {
+        console.error("Transaction insert error:", txErr.message);
+        setInterestError("Could not record your interest. Please try again.");
+        return;
+      }
+
+      // 2 — Fetch owner's email & name for the notification
+      const { data: ownerUser, error: ownerErr } = await Sclient
+        .from("users")
+        .select("email, uname")
+        .eq("uid", uid)
+        .maybeSingle();
+
+      if (ownerErr || !ownerUser?.email) {
+        console.warn("Could not find owner email for notification.");
+        setInterested(true);
+        return;
+      }
+
+      // 3 — Fetch the interested user's display name
+      const { data: meUser } = await Sclient
+        .from("users")
+        .select("uname")
+        .eq("uid", currentUserId)
+        .maybeSingle();
+
+      const interestedUserName = meUser?.uname ?? currentusername ?? "A user";
+
+      // 4 — Fire the edge function
+      await invokePropertyInterest(
+        ownerUser.email,
+        ownerUser.uname ?? ownerName ?? "Property Owner",
+        interestedUserName,
+        title
+      );
+
+      setInterested(true);
+    } catch (err: any) {
+      setInterestError("Something went wrong. Please try again.");
+      console.error("handleInterested:", err);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const statusLabel = isSold ? "Sold" : interested ? "Interested" : "Available";
   const statusStyle = {
-    border:     isSold ? "rgba(239,68,68,0.4)"    : interested ? "rgba(251,191,36,0.5)"   : "rgba(74,222,128,0.4)",
-    text:       isSold ? "#fca5a5"                 : interested ? "#fcd34d"                : "#4ade80",
-    dot:        isSold ? "#f87171"                 : interested ? "#fbbf24"                : "#4ade80",
-    animate:    !isSold && !interested,
+    border:  isSold ? "rgba(239,68,68,0.4)"  : interested ? "rgba(251,191,36,0.5)"  : "rgba(74,222,128,0.4)",
+    text:    isSold ? "#fca5a5"               : interested ? "#fcd34d"               : "#4ade80",
+    dot:     isSold ? "#f87171"               : interested ? "#fbbf24"               : "#4ade80",
+    animate: !isSold && !interested,
   };
 
   const BadgePill = ({ small = false }: { small?: boolean }) => (
@@ -175,7 +176,6 @@ async function propertyinterest(
     </div>
   );
 
-
   return (
     <>
       {/* ── CARD ─────────────────────────────────────────────── */}
@@ -184,7 +184,6 @@ async function propertyinterest(
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
         onClick={() => setOpen(true)}
       >
-        {/* Sold ribbon */}
         {isSold && (
           <div className="absolute inset-0 z-10 pointer-events-none">
             <div className="absolute top-0 right-0 w-28 h-28 overflow-hidden">
@@ -204,9 +203,7 @@ async function propertyinterest(
           <Badge className="absolute right-3 top-3 border border-white/10 bg-white/5 backdrop-blur-md text-[10px] font-bold text-white/70 capitalize tracking-wide px-2.5 py-1">
             {ptype}
           </Badge>
-          <div className="absolute left-3 top-3">
-            <BadgePill small />
-          </div>
+          <div className="absolute left-3 top-3"><BadgePill small /></div>
         </div>
 
         <CardContent className="p-4 space-y-3">
@@ -243,7 +240,6 @@ async function propertyinterest(
               style={{ maxWidth: "600px", fontFamily: "system-ui, -apple-system, sans-serif" }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal hero */}
               <div className="relative h-48 overflow-hidden bg-[#0d0d1a]">
                 <img
                   src={imgSrc} alt={title}
@@ -259,12 +255,9 @@ async function propertyinterest(
                 <Badge className="absolute right-4 bottom-4 border border-white/10 bg-white/5 backdrop-blur-md text-[9px] font-bold text-white/70 capitalize tracking-wide px-2 py-0.5">
                   {ptype}
                 </Badge>
-                <div className="absolute left-4 bottom-4">
-                  <BadgePill small />
-                </div>
+                <div className="absolute left-4 bottom-4"><BadgePill small /></div>
               </div>
 
-              {/* Modal body */}
               <div className="p-6 space-y-4">
                 <div className="space-y-0.5">
                   <h2 className="text-2xl font-black text-white tracking-tight">{title}</h2>
@@ -285,7 +278,6 @@ async function propertyinterest(
                   </p>
                 )}
 
-                {/* Stat tiles */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { icon: BedDouble, label: "Beds",    value: rooms },
@@ -300,7 +292,6 @@ async function propertyinterest(
                   ))}
                 </div>
 
-                {/* Owner row */}
                 <div className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-7 w-7 rounded-full bg-[#4ade80]/10 border border-[#4ade80]/20 flex items-center justify-center shrink-0">
@@ -320,7 +311,6 @@ async function propertyinterest(
                   <p className="text-[10px] text-rose-400 text-center">{interestError}</p>
                 )}
 
-                {/* ── CTA ── */}
                 <div className="pt-0.5">
                   {isSold ? (
                     <div className="flex items-center gap-3 p-3 rounded-xl border border-rose-500/20 bg-rose-500/5">
@@ -330,17 +320,6 @@ async function propertyinterest(
                       <div>
                         <p className="text-[10px] font-black text-rose-300 uppercase tracking-widest">Property Sold</p>
                         <p className="text-[9px] text-rose-400/60 mt-0.5">No longer available for purchase.</p>
-                      </div>
-                    </div>
-
-                  ) : isOwner ? (
-                    <div className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
-                      <div className="h-7 w-7 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                        <User className="h-3.5 w-3.5 text-amber-400" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest">Your Listing</p>
-                        <p className="text-[9px] text-amber-400/60 mt-0.5">You cannot express interest in your own property.</p>
                       </div>
                     </div>
 
@@ -359,7 +338,7 @@ async function propertyinterest(
                     <Button
                       className="w-full text-xs font-black uppercase tracking-widest bg-[#4ade80] hover:bg-[#22c55e] text-[#052e16] rounded-xl transition-all flex items-center justify-center gap-2"
                       style={{ height: "46px" }}
-                      onClick={(e) => { e.stopPropagation(); handleInterested();propertyinterest(ownerContact || "", ownerName || "", currentusername || "", title); }}
+                      onClick={(e) => { e.stopPropagation(); handleInterested(); }}
                       disabled={sending || !currentUserId}
                     >
                       <HeartHandshake className="h-4 w-4" />
